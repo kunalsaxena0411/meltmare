@@ -1,0 +1,15 @@
+{
+  "name": "meltmare",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MELTMARE scented candle store: storefront, API, Cashfree payments, OTP login and admin panel. No dependencies.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "hash-password": "node scripts/hash-password.js",
+    "test": "node test/api-mock.js && node test/api-cashfree.js",
+    "test:ui": "node test/ui.js"
+  }
+}
