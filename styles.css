@@ -202,6 +202,9 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 500; margin: 0; }
 .footer .brand img { height: 56px; margin-bottom: 14px; }
 .footer .brand .tagline { font-family: var(--serif); font-size: 24px; color: var(--gold); margin: 0 0 10px; }
 .footer .brand p { color: rgba(255, 253, 248, 0.75); font-size: 14px; max-width: 320px; margin: 0; }
+.footer .social-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); font-size: 13px; margin-top: 16px; text-decoration: none; transition: opacity .15s; }
+.footer .social-link:hover { opacity: .85; }
+.footer .social-link svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .footer h5 { margin: 0 0 14px; font-size: 12px; letter-spacing: 0.2em; color: var(--gold); font-weight: 600; }
 .footer li { list-style: none; margin-bottom: 9px; }
 .footer ul { padding: 0; margin: 0; }

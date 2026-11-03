@@ -51,7 +51,8 @@
     flame: '<svg viewBox="0 0 24 24"><path d="M12 3c2 3 5 5 5 9a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/></svg>',
     gift: '<svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1"/><path d="M3 9h18v3H3zM12 9v11M12 9c-2-4-6-3-5 0M12 9c2-4 6-3 5 0"/></svg>',
     shield: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
-    box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>'
+    box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>'
   };
 
   // ---------- api and state ----------
@@ -165,11 +166,11 @@
   function footer() {
     var list = function (arr) { return '<ul>' + arr.map(function (a) { return '<li><a href="' + a[0] + '" data-link>' + a[1] + '</a></li>'; }).join('') + '</ul>'; };
     return '<footer class="footer"><div class="wrap"><div class="cols">' +
-      '<div class="brand"><img src="/assets/logo-green.png" alt="MELTMERE"><p class="tagline">Find your scent. Light your mood.</p><p>Candles and décor made to make your space feel calm, personal and complete.</p></div>' +
+      '<div class="brand"><img src="/assets/logo-green.png" alt="MELTMERE"><p class="tagline">Find your scent. Light your mood.</p><p>Candles and décor made to make your space feel calm, personal and complete.</p><a href="https://www.instagram.com/meltmere_candles" target="_blank" rel="noopener noreferrer" class="social-link">' + I.instagram + '<span>@meltmere_candles</span></a></div>' +
       '<div><h5>SHOP</h5>' + list([['/shop', 'Shop all']].concat(SCENTS.map(function (s) { return ['/shop?scent=' + s, s]; }))) + '</div>' +
       '<div><h5>HELP</h5>' + list([['/faq', 'FAQ'], ['/candle-care', 'Candle care'], ['/contact', 'Contact us'], ['/policies/shipping', 'Shipping policy'], ['/policies/refund', 'Refund policy']]) + '</div>' +
       '<div><h5>JOIN THE CIRCLE</h5><p style="color:rgba(255,253,248,.75);font-size:14px;margin:0">New arrivals and offers, straight to your inbox.</p><form class="join" data-news><input type="email" required placeholder="Your email" aria-label="Email"><button>JOIN</button></form></div>' +
-      '</div><div class="bottom"><span>' + esc(INFO.email) + (INFO.phone ? ' · ' + esc(INFO.phone) : '') + '</span><span>© 2026 MELTMERE. All rights reserved.</span></div>' +
+      '</div><div class="bottom"><span>' + esc(INFO.email) + (INFO.phone ? ' · ' + esc(INFO.phone) : '') + ' · <a href="https://www.instagram.com/meltmere_candles" target="_blank" rel="noopener noreferrer" style="color:inherit">Instagram</a></span><span>© 2026 MELTMERE. All rights reserved.</span></div>' +
       '<div class="bottom" style="border:0;margin-top:0;padding-top:10px"><div class="pay"><span>UPI</span><span>Visa</span><span>Mastercard</span><span>RuPay</span><span>Netbanking</span></div><div class="legal"><a href="/policies/privacy" data-link>Privacy</a><a href="/policies/terms" data-link>Terms</a></div></div>' +
       '</div></footer>';
   }
