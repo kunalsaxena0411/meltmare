@@ -1,4 +1,4 @@
-// MELTMARE store server: static site + JSON API. Zero dependencies, Node 18+.
+// MELTMERE store server: static site + JSON API. Zero dependencies, Node 18+.
 // Run: node server.js   (see README.md for configuration)
 const http = require('http');
 const fs = require('fs');
@@ -440,6 +440,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
-  server.listen(cfg.port, () => console.log('MELTMARE running on ' + cfg.siteUrl + '  (payments: ' + (cashfree.mock ? 'MOCK test page' : cashfree.configured ? 'Cashfree ' + cashfree.env : 'OFF') + ')'));
+  server.listen(cfg.port, () => console.log('MELTMERE running on ' + cfg.siteUrl + '  (payments: ' + (cashfree.mock ? 'MOCK test page' : cashfree.configured ? 'Cashfree ' + cashfree.env : 'OFF') + ')'));
 }
 module.exports = { server, sweep };

@@ -12,7 +12,7 @@ const { boot, client, check, done } = require('./helpers');
   console.log('Static safety');
   for (const p of ['/server.js', '/.env', '/data/db.json', '/package.json', '/lib/db.js', '/assets/../server.js', '/media/../db.json']) {
     const x = await fetch(base + p); const t = await x.text();
-    check('blocks ' + p, !/createServer|"counter"|MELTMARE store server/.test(t) && (x.status === 404 || /<div id="app">/.test(t)), x.status);
+    check('blocks ' + p, !/createServer|"counter"|MELTMERE store server/.test(t) && (x.status === 404 || /<div id="app">/.test(t)), x.status);
   }
   check('serves app.js', (await fetch(base + '/app.js')).status === 200);
   check('serves image', (await fetch(base + '/assets/img/cedar-dusk.jpg')).headers.get('content-type') === 'image/jpeg');
@@ -96,9 +96,9 @@ const { boot, client, check, done } = require('./helpers');
 
   console.log('Admin');
   check('admin routes closed', (await shop.api('GET', '/api/admin/orders')).status === 401);
-  r = await admin.api('POST', '/api/admin/login', { email: 'admin@meltmare.com', password: 'wrong' });
+  r = await admin.api('POST', '/api/admin/login', { email: 'admin@meltmere.com', password: 'wrong' });
   check('wrong admin password', r.status === 401);
-  r = await admin.api('POST', '/api/admin/login', { email: 'admin@meltmare.com', password: 'test-admin-pass' });
+  r = await admin.api('POST', '/api/admin/login', { email: 'admin@meltmere.com', password: 'test-admin-pass' });
   check('admin login', r.status === 200 && admin.jar.mm_a);
   r = await admin.api('GET', '/api/admin/summary');
   check('summary', r.json.ordersToday === 1 && r.json.revenueToday === 678 && r.json.toPack === 1 && r.json.lowStock === 2, r.text);

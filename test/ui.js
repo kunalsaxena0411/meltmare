@@ -40,14 +40,14 @@ const errors = [];
 
   console.log('Pages');
   const routes = {
-    '/': ['Warm light', 'Our favourites', 'Find your scent', 'Loved by our customers', 'Join the MELTMARE circle', 'Cedar Dusk'],
+    '/': ['Warm light', 'Our favourites', 'Find your scent', 'Loved by our customers', 'Join the MELTMERE circle', 'Cedar Dusk'],
     '/shop': ['Shop all', 'Showing 10 of 10', 'Sold out', 'Only 3 left'],
     '/shop?scent=Woody': ['Cedar Dusk', 'Fig and Sandalwood', 'Showing 2 of 10'],
     '/product/cedar-dusk': ['Cedar Dusk', 'Cedarwood', '599', 'In stock, ready to ship', 'Add to cart', 'You may also like'],
     '/product/rose-petal': ['Sold out for now'],
-    '/story': ['Our story'], '/contact': ['Say hello', 'hello@meltmare.com', 'Send message'], '/faq': ['Frequently asked questions'], '/candle-care': ['Burn it right'],
+    '/story': ['Our story'], '/contact': ['Say hello', 'hello@meltmere.com', 'Send message'], '/faq': ['Frequently asked questions'], '/candle-care': ['Burn it right'],
     '/policies/shipping': ['Shipping policy'], '/policies/privacy': ['Cashfree'], '/cart': ['Your cart is empty'],
-    '/login': ['Welcome to MELTMARE', 'Send OTP'], '/nope': ['This page has gone missing'], '/admin': ['Sign in to manage the store']
+    '/login': ['Welcome to MELTMERE', 'Send OTP'], '/nope': ['This page has gone missing'], '/admin': ['Sign in to manage the store']
   };
   for (const [p, needles] of Object.entries(routes)) {
     const w = await browser().open(p), t = text(w).toLowerCase();
@@ -139,7 +139,7 @@ const errors = [];
 
   console.log('Admin');
   const adm = browser(), a = await adm.open('/admin'), ad = a.document;
-  let af = ad.querySelector('#adminLogin'); af.querySelector('[name=email]').value = 'admin@meltmare.com'; af.querySelector('[name=password]').value = 'nope';
+  let af = ad.querySelector('#adminLogin'); af.querySelector('[name=email]').value = 'admin@meltmere.com'; af.querySelector('[name=password]').value = 'nope';
   submit(a, af); await until(a, () => /not right/.test(text(a)), 'wrong pw message');
   check('wrong password rejected', /not right/.test(text(a)));
   af = ad.querySelector('#adminLogin'); af.querySelector('[name=password]').value = 'test-admin-pass'; submit(a, af);

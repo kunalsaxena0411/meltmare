@@ -1,4 +1,4 @@
-/* MELTMARE storefront: single page app, no build step.
+/* MELTMERE storefront: single page app, no build step.
    Products, accounts, orders and payments live on the server (see server.js and README.md).
    Only the shopping cart is kept in the browser (localStorage). */
 (function () {
@@ -7,7 +7,7 @@
   // ---------- config ----------
   var FREE_SHIP = 999; // overwritten from the server at start up
   var SHIP_FEE = 79;
-  var INFO = { email: 'hello@meltmare.com', phone: '', address: '', hours: '', policiesReviewed: false }; // overwritten from the server
+  var INFO = { email: 'hello@meltmere.com', phone: '', address: '', hours: '', policiesReviewed: false }; // overwritten from the server
   var SCENTS = ['Woody', 'Floral', 'Fresh', 'Sweet', 'Spiced'];
   var STATUSES = ['Pending payment', 'Paid', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
   var CUSTOMER_STATUS = { 'Pending payment': 'Waiting for payment', Paid: 'Order confirmed', Packed: 'Being packed', Shipped: 'On its way', Delivered: 'Delivered', Cancelled: 'Cancelled' };
@@ -23,7 +23,7 @@
 
   var POLICIES = {
     shipping: ['Shipping policy', ['We ship across India. Orders are packed within 2 working days and delivered in 3 to 7 working days, depending on your city.', 'Delivery is free on orders above ₹999. Below that, a flat delivery charge of ₹79 applies.', 'As soon as your order ships, its status updates in My account so you can follow it to your door.']],
-    refund: ['Refund policy', ['Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.', 'Refunds go back to the original payment method in 5 to 7 working days.', 'Write to us at hello@meltmare.com with your order number and a photo, and we will take care of the rest.']],
+    refund: ['Refund policy', ['Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.', 'Refunds go back to the original payment method in 5 to 7 working days.', 'Write to us at hello@meltmere.com with your order number and a photo, and we will take care of the rest.']],
     privacy: ['Privacy policy', ['We collect your name, email, phone number and address only to process orders and support you.', 'Payments are handled by Cashfree and we never store card details.', 'We do not sell your data. Ever.']],
     terms: ['Terms of service', ['Prices are in Indian rupees and include applicable taxes.', 'We may cancel an order for a stock or pricing error and will refund it in full.', 'By using this site you agree to these terms and to our other policies.']]
   };
@@ -150,14 +150,14 @@
     return '<div class="announce">Free delivery on orders above ₹' + FREE_SHIP + '</div>' +
       '<header class="header"><div class="wrap row">' +
       '<div class="left"><button class="icon-btn menu-btn" data-open="menu" aria-label="Open menu">' + I.menu + '</button><nav>' + navHtml + '</nav></div>' +
-      '<a href="/" data-link class="logo" aria-label="MELTMARE home"><img src="/assets/logo-green.png" alt=""><span>MELTMARE</span></a>' +
+      '<a href="/" data-link class="logo" aria-label="MELTMERE home"><img src="/assets/logo-green.png" alt=""><span>MELTMERE</span></a>' +
       '<div class="right"><button class="icon-btn" id="searchBtn" aria-label="Search">' + I.search + '</button>' +
       '<a class="icon-btn" href="' + (user ? '/account' : '/login') + '" data-link aria-label="Account">' + I.user + '</a>' +
       '<button class="icon-btn" data-open="cart" aria-label="Cart">' + I.bag + '<span class="badge-count" id="cartCount" style="' + (cnt ? '' : 'display:none') + '">' + cnt + '</span></button></div>' +
       '</div><div class="searchbar" id="searchbar"><div class="wrap"><input id="searchInput" placeholder="Search candles by name or scent" aria-label="Search"><div class="search-results" id="searchResults"></div></div></div></header>' +
       '<main>' + inner + '</main>' + footer() +
       '<div class="overlay" id="overlay"></div>' +
-      '<aside class="drawer left" id="menuDrawer" aria-label="Menu"><div class="drawer-head"><h3>MELTMARE</h3><button class="close-btn" data-close aria-label="Close">×</button></div>' +
+      '<aside class="drawer left" id="menuDrawer" aria-label="Menu"><div class="drawer-head"><h3>MELTMERE</h3><button class="close-btn" data-close aria-label="Close">×</button></div>' +
       '<div class="drawer-nav">' + [['/', 'Home'], ['/shop', 'Shop'], ['/story', 'Our Story'], ['/contact', 'Contact'], ['/faq', 'FAQ'], ['/candle-care', 'Candle care'], [user ? '/account' : '/login', user ? 'My account' : 'Sign in']].map(function (n) { return '<a href="' + n[0] + '" data-link>' + n[1] + '</a>'; }).join('') + '</div></aside>' +
       '<aside class="drawer right" id="cartDrawer" aria-label="Cart"></aside>';
   }
@@ -165,11 +165,11 @@
   function footer() {
     var list = function (arr) { return '<ul>' + arr.map(function (a) { return '<li><a href="' + a[0] + '" data-link>' + a[1] + '</a></li>'; }).join('') + '</ul>'; };
     return '<footer class="footer"><div class="wrap"><div class="cols">' +
-      '<div class="brand"><img src="/assets/logo-green.png" alt="MELTMARE"><p class="tagline">Find your scent. Light your mood.</p><p>Candles and décor made to make your space feel calm, personal and complete.</p></div>' +
+      '<div class="brand"><img src="/assets/logo-green.png" alt="MELTMERE"><p class="tagline">Find your scent. Light your mood.</p><p>Candles and décor made to make your space feel calm, personal and complete.</p></div>' +
       '<div><h5>SHOP</h5>' + list([['/shop', 'Shop all']].concat(SCENTS.map(function (s) { return ['/shop?scent=' + s, s]; }))) + '</div>' +
       '<div><h5>HELP</h5>' + list([['/faq', 'FAQ'], ['/candle-care', 'Candle care'], ['/contact', 'Contact us'], ['/policies/shipping', 'Shipping policy'], ['/policies/refund', 'Refund policy']]) + '</div>' +
       '<div><h5>JOIN THE CIRCLE</h5><p style="color:rgba(255,253,248,.75);font-size:14px;margin:0">New arrivals and offers, straight to your inbox.</p><form class="join" data-news><input type="email" required placeholder="Your email" aria-label="Email"><button>JOIN</button></form></div>' +
-      '</div><div class="bottom"><span>' + esc(INFO.email) + (INFO.phone ? ' · ' + esc(INFO.phone) : '') + '</span><span>© 2026 MELTMARE. All rights reserved.</span></div>' +
+      '</div><div class="bottom"><span>' + esc(INFO.email) + (INFO.phone ? ' · ' + esc(INFO.phone) : '') + '</span><span>© 2026 MELTMERE. All rights reserved.</span></div>' +
       '<div class="bottom" style="border:0;margin-top:0;padding-top:10px"><div class="pay"><span>UPI</span><span>Visa</span><span>Mastercard</span><span>RuPay</span><span>Netbanking</span></div><div class="legal"><a href="/policies/privacy" data-link>Privacy</a><a href="/policies/terms" data-link>Terms</a></div></div>' +
       '</div></footer>';
   }
@@ -208,20 +208,20 @@
     var strip = ['Find your scent. Light your mood.', 'Hand-poured in small batches', 'Clean-burning wax', 'Botanical fragrance oils', 'Every room has a fragrance. Find yours.'];
     var track = strip.map(function (s) { return '<span>' + s + '</span><b>✦</b>'; }).join('');
     return '<section class="hero"><div class="bgimg"><img src="/assets/img/hero.jpg" alt="" data-ph=""></div><div class="wrap inner">' +
-      '<p class="eyebrow gold">MELTMARE · SCENTED CANDLES &amp; DÉCOR</p><h1>Warm light<br><em>for every room.</em></h1>' +
-      '<p class="lead">Candles and décor from MELTMARE, made to make your space feel calm, personal and complete.</p>' +
+      '<p class="eyebrow gold">MELTMERE · SCENTED CANDLES &amp; DÉCOR</p><h1>Warm light<br><em>for every room.</em></h1>' +
+      '<p class="lead">Candles and décor from MELTMERE, made to make your space feel calm, personal and complete.</p>' +
       '<div class="cta"><a class="btn gold" href="/shop" data-link>Shop the collection →</a><a class="btn outline" href="/story" data-link>Our story</a></div></div><div class="mouse"></div></section>' +
       '<div class="marquee"><div class="track">' + track + track + '</div></div>' +
       '<section class="section"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">THE EDIT</p><h2>Our favourites</h2></div><div class="grid reveal">' + fav.map(card).join('') + '</div>' +
       '<div class="center mt"><a class="text-link" href="/shop" data-link>View all products →</a></div></div></section>' +
-      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SHOP BY SCENT</p><h2>Find your scent</h2><p>Every MELTMARE candle begins with a fragrance. Choose the mood first — the room follows.</p></div><div class="tiles reveal">' +
+      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SHOP BY SCENT</p><h2>Find your scent</h2><p>Every MELTMERE candle begins with a fragrance. Choose the mood first — the room follows.</p></div><div class="tiles reveal">' +
       SCENTS.map(function (s) { return '<a class="tile" href="/shop?scent=' + s + '" data-link><img src="/assets/img/scent-' + s.toLowerCase() + '.jpg" alt="" data-ph=""><div><h3>' + s + '</h3><span>EXPLORE</span></div></a>'; }).join('') + '</div></div></section>' +
       '<section class="promise"><div class="wrap cols">' + [[I.flame, 'Thoughtfully made', 'Designed with care, finished by hand'], [I.gift, 'Gift ready', 'Beautiful enough to give as it is'], [I.shield, 'Secure payment', 'Pay safely with UPI, cards or netbanking'], [I.box, 'Delivered with care', 'Packed to arrive in perfect condition']].map(function (x) { return '<div>' + x[0] + '<h4>' + x[1] + '</h4><p>' + x[2] + '</p></div>'; }).join('') + '</div></section>' +
       '<section class="section"><div class="wrap split"><div class="pic reveal"><img src="/assets/img/story.jpg" alt="" data-ph=""></div><div class="reveal"><p class="eyebrow">OUR STORY</p><h2>Made to be lit, kept and gifted</h2>' +
       '<p>Every candle starts with one question: what does this moment smell like? From cedar evenings to sea salt mornings, we choose the fragrance first and design everything else around it.</p><p>We keep our range small and our scents honest, so every candle is one you will want to light again.</p><a class="btn green" href="/story" data-link>Read our story</a></div></div></section>' +
       '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SAMPLE REVIEWS</p><h2>Loved by our customers</h2></div><div class="reviews reveal">' +
       REVIEWS.map(function (r) { return '<div class="review"><div class="stars">★★★★★</div><p>“' + r[0] + '”</p><b>' + r[1].toUpperCase() + '</b></div>'; }).join('') + '</div></div></section>' +
-      '<section class="section bg-deep news"><div class="wrap reveal"><p class="eyebrow gold">NEWSLETTER</p><h2>Join the MELTMARE circle</h2><p>New arrivals and offers, straight to your inbox.</p><form data-news><input type="email" required placeholder="Your email" aria-label="Email"><button class="btn gold">SUBSCRIBE</button></form></div></section>';
+      '<section class="section bg-deep news"><div class="wrap reveal"><p class="eyebrow gold">NEWSLETTER</p><h2>Join the MELTMERE circle</h2><p>New arrivals and offers, straight to your inbox.</p><form data-news><input type="email" required placeholder="Your email" aria-label="Email"><button class="btn gold">SUBSCRIBE</button></form></div></section>';
   }
 
   function pageShop() {
@@ -230,7 +230,7 @@
     if (sort === 'asc') items.sort(function (a, b) { return a.price - b.price; });
     if (sort === 'desc') items.sort(function (a, b) { return b.price - a.price; });
     var chips = ['All'].concat(SCENTS).map(function (s) { return '<a class="chip ' + (s === scent ? 'on' : '') + '" href="/shop' + (s === 'All' ? '' : '?scent=' + s) + (sort !== 'new' ? (s === 'All' ? '?' : '&') + 'sort=' + sort : '') + '" data-link>' + s + '</a>'; }).join('');
-    return '<div class="page-head"><p class="eyebrow">THE COLLECTION</p><h1>Shop all</h1><p>Everything MELTMARE, in one place.</p></div><div class="wrap"><div class="toolbar"><div class="chips" style="margin:0;justify-content:flex-start">' + chips + '</div>' +
+    return '<div class="page-head"><p class="eyebrow">THE COLLECTION</p><h1>Shop all</h1><p>Everything MELTMERE, in one place.</p></div><div class="wrap"><div class="toolbar"><div class="chips" style="margin:0;justify-content:flex-start">' + chips + '</div>' +
       '<select id="sort" aria-label="Sort"><option value="new"' + (sort === 'new' ? ' selected' : '') + '>Newest</option><option value="asc"' + (sort === 'asc' ? ' selected' : '') + '>Price: low to high</option><option value="desc"' + (sort === 'desc' ? ' selected' : '') + '>Price: high to low</option></select></div>' +
       '<div class="grid">' + items.map(card).join('') + '</div><p class="center muted" style="margin:40px 0 80px">Showing ' + items.length + ' of ' + store.products().filter(function (p) { return p.active; }).length + '</p></div>';
   }
@@ -253,7 +253,7 @@
   }
 
   function pageStory() {
-    return '<div class="page-head"><p class="eyebrow">SINCE THE FIRST POUR</p><h1>Our story</h1></div><div class="prose"><p style="font-size:21px;font-family:var(--serif)">MELTMARE began with a simple idea: a candle should do more than light a room. It should change how the room feels.</p>' +
+    return '<div class="page-head"><p class="eyebrow">SINCE THE FIRST POUR</p><h1>Our story</h1></div><div class="prose"><p style="font-size:21px;font-family:var(--serif)">MELTMERE began with a simple idea: a candle should do more than light a room. It should change how the room feels.</p>' +
       '<p>Every candle starts with one question: what does this moment smell like? From cedar evenings to sea salt mornings, we choose the fragrance first and design everything else around it. The wax, the wick, the jar — each one exists to carry the scent, never to shout over it.</p>' +
       '<p>We keep our range small and our scents honest, so every candle is one you will want to light again. Light one, breathe in, and let the room do the rest.</p><div class="quote">“Scent first, everything else follows.”</div>' +
       '<div class="center"><p class="eyebrow">Shop by scent</p><div class="chips">' + SCENTS.map(function (s) { return '<a class="chip" href="/shop?scent=' + s + '" data-link>' + s + '</a>'; }).join('') + '</div></div></div>';
@@ -273,13 +273,13 @@
 
   function pageCare() {
     var steps = ['Trim the wick to about 5 mm before every burn', 'On the first burn, let the wax melt right to the edge of the jar, usually 2 to 3 hours', 'Burn for no more than 4 hours at a time', 'Keep the candle away from drafts, children, pets and anything that can catch fire', 'Stop using it when about 1 cm of wax is left'];
-    return '<div class="page-head"><p class="eyebrow">CANDLE CARE</p><h1>Burn it right</h1><p>A few simple habits help every MELTMARE candle burn cleaner, longer and safer.</p></div><div class="steps wrap">' +
+    return '<div class="page-head"><p class="eyebrow">CANDLE CARE</p><h1>Burn it right</h1><p>A few simple habits help every MELTMERE candle burn cleaner, longer and safer.</p></div><div class="steps wrap">' +
       steps.map(function (s, i) { return '<div class="step"><i>' + (i + 1) + '</i><p>' + s + '</p></div>'; }).join('') + '</div>';
   }
 
   function pagePolicy(key) {
     var pol = POLICIES[key]; if (!pol) return page404();
-    return '<div class="page-head"><p class="eyebrow">MELTMARE POLICIES</p><h1>' + pol[0] + '</h1></div><div class="prose">' + (INFO.policiesReviewed ? '' : '<span class="draft">Draft policy — to be reviewed before launch.</span>') + pol[1].map(function (t) { return '<p>' + t + '</p>'; }).join('') + '</div>';
+    return '<div class="page-head"><p class="eyebrow">MELTMERE POLICIES</p><h1>' + pol[0] + '</h1></div><div class="prose">' + (INFO.policiesReviewed ? '' : '<span class="draft">Draft policy — to be reviewed before launch.</span>') + pol[1].map(function (t) { return '<p>' + t + '</p>'; }).join('') + '</div>';
   }
 
   function page404() {
@@ -297,7 +297,7 @@
 
   function pageLogin() {
     if (store.user()) { go(safeNext(new URLSearchParams(location.search).get('next') || '/account'), true); return ''; }
-    return '<div class="auth"><h1>Welcome to MELTMARE</h1><p class="muted">Sign in with your email or phone number</p><div class="tabs"><button class="on" data-mode="email">EMAIL</button><button data-mode="phone">PHONE</button></div>' +
+    return '<div class="auth"><h1>Welcome to MELTMERE</h1><p class="muted">Sign in with your email or phone number</p><div class="tabs"><button class="on" data-mode="email">EMAIL</button><button data-mode="phone">PHONE</button></div>' +
       '<form id="loginForm"><div class="field" id="idField"><label id="idLabel">Email</label><input type="email" id="idInput" required autocomplete="email"></div>' +
       '<div id="otpBox" style="display:none"><label>Enter the 6 digit code</label><div class="otp">' + [0, 1, 2, 3, 4, 5].map(function () { return '<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit">'; }).join('') + '</div><p class="note" id="otpNote"></p><button type="button" class="link-btn" id="resendBtn" style="display:none">Resend code</button></div>' +
       '<div id="nameField" class="field" style="display:none"><label>Your name</label><input type="text" id="nameInput" autocomplete="name" maxlength="80"></div><div class="err" id="loginErr"></div>' +
@@ -367,11 +367,11 @@
 
   // ---------- admin ----------
   function adminLoginHtml() {
-    return '<div class="admin" style="display:grid;place-items:center;padding:24px"><form id="adminLogin" class="panel-box" style="width:min(420px,100%)"><p class="eyebrow">MELTMARE ADMIN</p><h3 style="font-size:30px">Sign in to manage the store</h3><div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div><div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div><div class="err" id="adminErr"></div><button class="btn green block">Sign in</button></form></div>';
+    return '<div class="admin" style="display:grid;place-items:center;padding:24px"><form id="adminLogin" class="panel-box" style="width:min(420px,100%)"><p class="eyebrow">MELTMERE ADMIN</p><h3 style="font-size:30px">Sign in to manage the store</h3><div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div><div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div><div class="err" id="adminErr"></div><button class="btn green block">Sign in</button></form></div>';
   }
   function adminFrame(tab, body) {
     var tabs = ['dashboard', 'products', 'orders', 'messages'].map(function (t) { return '<a class="chip ' + (t === tab ? 'on' : '') + '" href="/admin?tab=' + t + '" data-link style="text-transform:capitalize">' + t + '</a>'; }).join('');
-    return '<div class="admin"><div class="admin-top"><div class="wrap row"><b>MELTMARE Admin</b><div><a class="btn outline" href="/" data-link style="padding:8px 16px">View store</a> <button class="btn outline" id="adminOut" style="padding:8px 16px">Sign out</button></div></div></div><div class="wrap"><div class="admin-nav">' + tabs + '</div>' + body + '<div style="height:60px"></div></div></div>';
+    return '<div class="admin"><div class="admin-top"><div class="wrap row"><b>MELTMERE Admin</b><div><a class="btn outline" href="/" data-link style="padding:8px 16px">View store</a> <button class="btn outline" id="adminOut" style="padding:8px 16px">Sign out</button></div></div></div><div class="wrap"><div class="admin-nav">' + tabs + '</div>' + body + '<div style="height:60px"></div></div></div>';
   }
   function pageAdmin() {
     return api('GET', '/api/admin/me').then(function (j) {
@@ -463,7 +463,7 @@
   }
 
   // ---------- router ----------
-  var TITLES = { '/': 'MELTMARE: Scented Candles for Every Mood', '/shop': 'Shop Scented Candles, MELTMARE', '/story': 'Our Story, MELTMARE', '/contact': 'Contact, MELTMARE', '/faq': 'Help and FAQ, MELTMARE', '/candle-care': 'How to Burn a Candle, MELTMARE', '/cart': 'Your Cart, MELTMARE', '/login': 'Sign In, MELTMARE', '/account': 'My Account, MELTMARE', '/checkout': 'Checkout, MELTMARE', '/admin': 'Admin, MELTMARE' };
+  var TITLES = { '/': 'MELTMERE: Scented Candles for Every Mood', '/shop': 'Shop Scented Candles, MELTMERE', '/story': 'Our Story, MELTMERE', '/contact': 'Contact, MELTMERE', '/faq': 'Help and FAQ, MELTMERE', '/candle-care': 'How to Burn a Candle, MELTMERE', '/cart': 'Your Cart, MELTMERE', '/login': 'Sign In, MELTMERE', '/account': 'My Account, MELTMERE', '/checkout': 'Checkout, MELTMERE', '/admin': 'Admin, MELTMERE' };
   var routeSeq = 0;
 
   function go(url, replace) { if (replace) history.replaceState(null, '', url); else history.pushState(null, '', url); var p = route(); window.scrollTo(0, 0); return p; }
@@ -496,7 +496,7 @@
       $('#app').innerHTML = shell(html);
       renderCartDrawer();
       var pr = (m = path.match(/^\/product\/([\w-]+)$/)) && find(m[1]);
-      document.title = pr ? pr.name + ', scented candle | MELTMARE' : TITLES[path] || (path.indexOf('/policies') === 0 ? 'Policies, MELTMARE' : 'MELTMARE');
+      document.title = pr ? pr.name + ', scented candle | MELTMERE' : TITLES[path] || (path.indexOf('/policies') === 0 ? 'Policies, MELTMERE' : 'MELTMERE');
       bind();
       var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.08 }) : null;
       $$('.reveal').forEach(function (el) { io ? io.observe(el) : el.classList.add('in'); });
@@ -534,7 +534,7 @@
     $$('[data-news]').forEach(function (f) {
       f.onsubmit = function (e) {
         e.preventDefault();
-        api('POST', '/api/subscribe', { email: f.querySelector('input').value }).then(function () { f.reset(); toast('You are in. Welcome to the MELTMARE circle'); }, function (x) { toast(x.message); });
+        api('POST', '/api/subscribe', { email: f.querySelector('input').value }).then(function () { f.reset(); toast('You are in. Welcome to the MELTMERE circle'); }, function (x) { toast(x.message); });
       };
     });
     var cf = $('#contactForm'); if (cf) cf.onsubmit = function (e) {

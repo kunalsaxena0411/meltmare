@@ -1,4 +1,4 @@
-# MELTMARE store
+# MELTMERE store
 
 Scented candle store for meltmare.com: storefront, cart, checkout with **Cashfree**, customer sign in by **email or phone OTP**, order history, and an **admin panel**. Plain Node.js, **no packages to install**.
 
