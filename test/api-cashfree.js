@@ -22,8 +22,9 @@ global.fetch = async (url, opts) => {
   const { sweep } = require('../server');
   const shop = client(base), admin = client(base), anon = client(base);
   const addr = { name: 'Asha Rao', phone: '9876543210', line: '12 MG Road', city: 'Bengaluru', state: 'Karnataka', pin: '560001' };
-  let r = await shop.api('POST', '/api/auth/request', { mode: 'email', id: 'asha@example.com' });
-  await shop.api('POST', '/api/auth/verify', { mode: 'email', id: 'asha@example.com', code: r.json.devOtp, name: 'Asha' });
+  let r = await shop.api('POST', '/api/auth/request', { mode: 'phone', id: '9876543210' });
+  await shop.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code: r.json.devOtp, name: 'Asha' });
+  await shop.api('PATCH', '/api/me', { name: 'Asha', email: 'asha@example.com' });
   check('config reports sandbox', (await shop.api('GET', '/api/products')).json.config.payments === 'sandbox');
 
   console.log('Create order');

@@ -331,13 +331,24 @@
     return '<div class="panel-box" style="align-self:start"><h3>Order summary</h3><div class="totals"><div><span>Subtotal</span><span>' + money(sub) + '</span></div><div><span>Delivery</span><span>' + (ship ? money(ship) : 'Free') + '</span></div><div class="grand"><span>Total</span><span>' + money(sub + ship) + '</span></div></div><div style="display:grid;gap:12px;margin-top:20px">' + (extra || '') + '</div></div>';
   }
 
-  function pageLogin() {
+    function pageLogin() {
     if (store.user()) { go(safeNext(new URLSearchParams(location.search).get('next') || '/account'), true); return ''; }
-    return '<div class="auth"><h1>Welcome to MELTMERE</h1><p class="muted">Sign in with your email or phone number</p><div class="tabs"><button class="on" data-mode="email">EMAIL</button><button data-mode="phone">PHONE</button></div>' +
-      '<form id="loginForm"><div class="field" id="idField"><label id="idLabel">Email</label><input type="email" id="idInput" required autocomplete="email"></div>' +
+    return '<div class="auth"><h1>Welcome to MELTMERE</h1><p class="muted">Sign in with your mobile number to view your orders</p>' +
+      '<form id="loginForm"><div class="field" id="idField"><label id="idLabel">Mobile number</label>' +
+      '<div style="display:flex;gap:10px">' +
+      '<select id="countryCode" name="countryCode" style="width:110px;flex:none;padding:12px 8px">' +
+      '<option value="+91" selected>+91 (IN)</option>' +
+      '<option value="+1">+1 (US)</option>' +
+      '<option value="+44">+44 (UK)</option>' +
+      '<option value="+971">+971 (AE)</option>' +
+      '<option value="+65">+65 (SG)</option>' +
+      '<option value="+61">+61 (AU)</option>' +
+      '</select>' +
+      '<input type="tel" id="idInput" placeholder="98765 43210" required pattern="[0-9]{10}" title="Please enter a valid 10 digit mobile number" autocomplete="tel-national" style="flex:1">' +
+      '</div></div>' +
       '<div id="otpBox" style="display:none"><label>Enter the 6 digit code</label><div class="otp">' + [0, 1, 2, 3, 4, 5].map(function () { return '<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit">'; }).join('') + '</div><p class="note" id="otpNote"></p><button type="button" class="link-btn" id="resendBtn" style="display:none">Resend code</button></div>' +
-      '<div id="nameField" class="field" style="display:none"><label>Your name</label><input type="text" id="nameInput" autocomplete="name" maxlength="80"></div><div class="err" id="loginErr"></div>' +
-      '<button class="btn green block" id="loginBtn">Send OTP</button></form><p class="note" style="margin-top:20px">New here? Just enter your email or phone. We will create your account when you verify the code.</p></div>';
+      '<div id="nameField" class="field" style="display:none"><label>Your full name</label><input type="text" id="nameInput" autocomplete="name" maxlength="80" placeholder="e.g. Priya Sharma"></div><div class="err" id="loginErr"></div>' +
+      '<button class="btn green block" id="loginBtn">Send OTP</button></form><p class="note" style="margin-top:20px;text-align:center">New here? Just enter your mobile number. We will create your account when you verify the code.</p></div>';
   }
 
   function accountShell(u, tab, body) {
@@ -358,7 +369,12 @@
     });
   }
   function profileHtml(u) {
-    return '<form class="panel-box" id="profileForm" style="max-width:520px"><div class="field"><label>Name</label><input type="text" name="name" required maxlength="80" value="' + esc(u.name) + '"></div><div class="field"><label>Email</label><input type="email" name="email" value="' + esc(u.email || '') + '"></div><div class="field"><label>Phone</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter a valid 10 digit phone number" value="' + esc(u.phone || '') + '"></div><div class="field"><label>Saved address</label><textarea name="address" maxlength="300">' + esc(u.address || '') + '</textarea></div><div class="err" id="profileErr"></div><div style="display:flex;gap:10px"><button class="btn green">Save</button><button type="button" class="btn outline-dark" id="logout">Log out</button></div></form>';
+    return '<form class="panel-box" id="profileForm" style="max-width:520px">' +
+      '<div class="field"><label>Your full name</label><input type="text" name="name" required maxlength="80" value="' + esc(u.name) + '"></div>' +
+      '<div class="field"><label>Mobile number</label><input type="tel" name="phone" readonly style="background:var(--beige);cursor:not-allowed" value="' + esc(u.phone || '') + '"><span class="note">Mobile number is your verified sign-in identity.</span></div>' +
+      '<div class="field"><label>Email address <span class="note" style="text-transform:none;font-weight:normal">(Optional — for order confirmation emails)</span></label><input type="email" name="email" placeholder="name@example.com" value="' + esc(u.email || '') + '"></div>' +
+      '<div class="field"><label>Saved delivery address</label><textarea name="address" maxlength="300" placeholder="Flat, building, street, city and pin">' + esc(u.address || '') + '</textarea></div>' +
+      '<div class="err" id="profileErr"></div><div style="display:flex;gap:10px;margin-top:20px"><button class="btn green">Save changes</button><button type="button" class="btn outline-dark" id="logout">Log out</button></div></form>';
   }
   function orderRow(o) {
     var steps = ['Paid', 'Packed', 'Shipped', 'Delivered'], idx = steps.indexOf(o.status);
@@ -669,18 +685,9 @@
   }
 
   function bindLogin(lf) {
-    var st = { mode: 'email', step: 1, id: '' };
-    var idInput = $('#idInput'), label = $('#idLabel'), btn = $('#loginBtn'), err = $('#loginErr'), note = $('#otpNote'), resend = $('#resendBtn'), otp = $$('.otp input'), resendTimer;
+    var st = { step: 1, id: '', countryCode: '+91' };
+    var idInput = $('#idInput'), ccInput = $('#countryCode'), btn = $('#loginBtn'), err = $('#loginErr'), note = $('#otpNote'), resend = $('#resendBtn'), otp = $$('.otp input'), resendTimer;
     var next = safeNext(new URLSearchParams(location.search).get('next'));
-    $$('.tabs button').forEach(function (b) {
-      b.onclick = function () {
-        if (st.step !== 1) return;
-        st.mode = b.dataset.mode; $$('.tabs button').forEach(function (x) { x.classList.toggle('on', x === b); });
-        label.textContent = st.mode === 'email' ? 'Email' : 'Phone number';
-        idInput.type = st.mode === 'email' ? 'email' : 'tel'; idInput.value = ''; idInput.pattern = st.mode === 'phone' ? '[0-9]{10}' : ''; idInput.title = 'Please enter a valid 10 digit phone number';
-        idInput.autocomplete = st.mode === 'email' ? 'email' : 'tel'; err.textContent = '';
-      };
-    });
     otp.forEach(function (o, i) {
       o.oninput = function () { o.value = o.value.replace(/\D/g, ''); if (o.value && otp[i + 1]) otp[i + 1].focus(); };
       o.onkeydown = function (e) { if (e.key === 'Backspace' && !o.value && otp[i - 1]) otp[i - 1].focus(); };
@@ -689,31 +696,43 @@
         e.preventDefault(); otp.forEach(function (x, k) { x.value = t.charAt(k) || ''; }); (otp[Math.min(t.length, 5)]).focus();
       };
     });
-    function armResend() { resend.style.display = 'none'; clearTimeout(resendTimer); resendTimer = setTimeout(function () { resend.style.display = ''; }, 30000); }
+    function armResend() {
+      resend.style.display = 'none';
+      clearTimeout(resendTimer);
+      resendTimer = setTimeout(function () { resend.style.display = ''; }, 30000);
+    }
     function request() {
-      return api('POST', '/api/auth/request', { mode: st.mode, id: st.id }).then(function (j) {
-        note.textContent = 'We sent a 6 digit code to ' + st.id + (j.devOtp ? '. Test mode: your code is ' + j.devOtp : '');
+      return api('POST', '/api/auth/request', { mode: 'phone', id: st.id, countryCode: st.countryCode }).then(function (j) {
+        var fullPhone = (st.countryCode === '+91' ? '+91 ' : st.countryCode + ' ') + st.id;
+        note.textContent = 'We sent a 6 digit code to ' + fullPhone + (j.devOtp ? '. Test mode: your code is ' + j.devOtp : '');
         armResend();
       });
     }
-    resend.onclick = function () { err.textContent = ''; request().then(function () { toast('A new code is on its way'); }, function (x) { err.textContent = x.message; }); };
+    resend.onclick = function () { err.textContent = ''; request().then(function () { toast('A new code has been sent'); }, function (x) { err.textContent = x.message; }); };
     lf.onsubmit = function (e) {
       e.preventDefault(); err.textContent = '';
       if (st.step === 1) {
-        st.id = idInput.value.trim(); btn.disabled = true; btn.textContent = 'Sending…';
+        st.id = idInput.value.trim();
+        st.countryCode = ccInput ? ccInput.value : '+91';
+        btn.disabled = true; btn.textContent = 'Sending OTP…';
         request().then(function () {
-          st.step = 2; $('#otpBox').style.display = ''; idInput.readOnly = true; btn.disabled = false; btn.textContent = 'Verify and continue'; otp[0].focus();
+          st.step = 2; $('#otpBox').style.display = ''; $('#idField').style.display = 'none'; btn.disabled = false; btn.textContent = 'Verify and continue'; otp[0].focus();
         }, function (x) { btn.disabled = false; btn.textContent = 'Send OTP'; err.textContent = x.message; });
       } else {
         var code = otp.map(function (o) { return o.value; }).join('');
         if (code.length !== 6) { err.textContent = 'Please enter the 6 digit code'; return; }
         btn.disabled = true; btn.textContent = 'Checking…';
-        api('POST', '/api/auth/verify', { mode: st.mode, id: st.id, code: code, name: $('#nameInput').value.trim() }).then(function (j) {
-          S.user = j.user; go(next);
+        api('POST', '/api/auth/verify', { mode: 'phone', id: st.id, countryCode: st.countryCode, code: code, name: ($('#nameInput') ? $('#nameInput').value.trim() : '') }).then(function (j) {
+          S.user = j.user; toast('Welcome, ' + j.user.name); go(next || '/account');
         }, function (x) {
           btn.disabled = false; btn.textContent = 'Verify and continue';
-          if (x.data && x.data.needName) { $('#nameField').style.display = ''; $('#nameInput').focus(); err.textContent = 'Welcome! Tell us your name to finish.'; }
-          else err.textContent = x.message;
+          if (x.data && x.data.needName) {
+            $('#nameField').style.display = '';
+            $('#nameInput').focus();
+            err.textContent = 'Welcome! Since this is your first time, please enter your name to complete sign up.';
+          } else {
+            err.textContent = x.message;
+          }
         });
       }
     };

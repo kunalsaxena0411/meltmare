@@ -18,31 +18,31 @@ const { boot, client, check, done } = require('./helpers');
   check('serves image', (await fetch(base + '/assets/img/cedar-dusk.jpg')).headers.get('content-type') === 'image/jpeg');
   check('SPA fallback', /<div id="app">/.test(await (await fetch(base + '/product/cedar-dusk')).text()));
 
-  console.log('OTP login');
+    console.log('Mobile OTP login');
   r = await shop.api('POST', '/api/auth/request', { mode: 'email', id: 'not-an-email' });
-  check('rejects bad email', r.status === 400);
+  check('rejects email login attempt', r.status === 400 && /mobile number OTP/i.test(r.json.error));
   r = await shop.api('POST', '/api/auth/request', { mode: 'phone', id: '12345' });
-  check('rejects bad phone', r.status === 400);
-  r = await shop.api('POST', '/api/auth/request', { mode: 'email', id: 'Asha@Example.com' });
+  check('rejects bad phone number', r.status === 400);
+  r = await shop.api('POST', '/api/auth/request', { mode: 'phone', id: '9876543210' });
   const code = r.json.devOtp;
-  check('code issued', r.status === 200 && /^\d{6}$/.test(code));
-  r = await shop.api('POST', '/api/auth/request', { mode: 'email', id: 'asha@example.com' });
+  check('code issued for mobile', r.status === 200 && /^\d{6}$/.test(code));
+  r = await shop.api('POST', '/api/auth/request', { mode: 'phone', id: '9876543210' });
   check('resend within 30s blocked', r.status === 429);
-  r = await shop.api('POST', '/api/auth/verify', { mode: 'email', id: 'asha@example.com', code: '000000' });
+  r = await shop.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code: '000000' });
   check('wrong code rejected', r.status === 400, r.text);
-  r = await shop.api('POST', '/api/auth/verify', { mode: 'email', id: 'asha@example.com', code });
+  r = await shop.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code });
   check('new user must give a name (code kept)', r.status === 422 && r.json.needName === true, r.text);
-  r = await shop.api('POST', '/api/auth/verify', { mode: 'email', id: 'asha@example.com', code, name: 'Asha Rao' });
+  r = await shop.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code, name: 'Asha Rao' });
   check('verify creates user and cookie', r.status === 200 && r.json.user.name === 'Asha Rao' && shop.jar.mm_s, r.text);
-  r = await shop.api('POST', '/api/auth/verify', { mode: 'email', id: 'asha@example.com', code, name: 'Asha Rao' });
+  r = await shop.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code, name: 'Asha Rao' });
   check('code cannot be reused', r.status === 400);
   r = await shop.api('GET', '/api/auth/me');
-  check('me returns user', r.json.user && r.json.user.email === 'asha@example.com');
-  // lockout after 5 wrong tries
-  r = await other.api('POST', '/api/auth/request', { mode: 'phone', id: '9876543210' });
+  check('me returns user with phone', r.json.user && r.json.user.phone === '9876543210');
+  // lockout after 5 wrong tries on another number
+  r = await other.api('POST', '/api/auth/request', { mode: 'phone', id: '9123456780' });
   const c2 = r.json.devOtp; let last;
-  for (let i = 0; i < 5; i++) last = await other.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code: c2 === '111111' ? '222222' : '111111' });
-  r = await other.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code: c2, name: 'Ravi' });
+  for (let i = 0; i < 5; i++) last = await other.api('POST', '/api/auth/verify', { mode: 'phone', id: '9123456780', code: c2 === '111111' ? '222222' : '111111' });
+  r = await other.api('POST', '/api/auth/verify', { mode: 'phone', id: '9123456780', code: c2, name: 'Ravi' });
   check('locks after 5 wrong attempts, even with right code', r.status === 400 && !other.jar.mm_s, r.text);
   await sleep(31000 * 0); // resend gate not needed: new key below
   // forged cookie
@@ -86,13 +86,13 @@ const { boot, client, check, done } = require('./helpers');
   r = await shop.api('POST', '/api/orders/' + o2.id + '/pay');
   check('can retry payment on pending order', r.status === 200 && r.json.payment.paymentSessionId.startsWith('mock_'));
   check("another user cannot see my order", (await other.api('GET', '/api/orders/' + o1.id)).status === 401);
-  const b2 = client(base); let rr = await b2.api('POST', '/api/auth/request', { mode: 'email', id: 'b@example.com' });
-  await b2.api('POST', '/api/auth/verify', { mode: 'email', id: 'b@example.com', code: rr.json.devOtp, name: 'Bee' });
+    const b2 = client(base); let rr = await b2.api('POST', '/api/auth/request', { mode: 'phone', id: '9988776655' });
+  await b2.api('POST', '/api/auth/verify', { mode: 'phone', id: '9988776655', code: rr.json.devOtp, name: 'Bee' });
   check('other logged in user gets 404 for my order', (await b2.api('GET', '/api/orders/' + o1.id)).status === 404);
-  r = await shop.api('PATCH', '/api/me', { name: 'Asha R', email: 'asha@example.com', phone: '9876543210', address: '12 MG Road' });
-  check('profile update', r.status === 200 && r.json.user.phone === '9876543210');
-  r = await b2.api('PATCH', '/api/me', { name: 'Bee', email: 'b@example.com', phone: '9876543210' });
-  check('duplicate phone refused', r.status === 400);
+  r = await shop.api('PATCH', '/api/me', { name: 'Asha R', email: 'asha@example.com', address: '12 MG Road' });
+  check('profile update with optional email', r.status === 200 && r.json.user.email === 'asha@example.com');
+  r = await b2.api('PATCH', '/api/me', { name: 'Bee', email: 'asha@example.com' });
+  check('duplicate email refused', r.status === 400);
 
   console.log('Admin');
   check('admin routes closed', (await shop.api('GET', '/api/admin/orders')).status === 401);
