@@ -89,7 +89,12 @@
     user: function () { return S.user; }
   };
   var find = function (slug) { return S.products.filter(function (p) { return p.slug === slug; })[0]; };
-  var imgSrc = function (p) { return p.image || '/assets/img/' + p.slug + '.jpg'; };
+  var productImages = function (p) {
+    if (p && p.images && p.images.length) return p.images;
+    if (p && p.image) return [p.image, '/assets/img/placement-ideas.png'];
+    return ['/assets/img/' + (p ? p.slug : 'candle') + '.jpg', '/assets/img/placement-ideas.png'];
+  };
+  var imgSrc = function (p) { return productImages(p)[0]; };
   var cartLines = function () {
     return store.cart().map(function (l) { var p = find(l.slug); return p ? { p: p, qty: l.qty } : null; }).filter(Boolean);
   };
@@ -243,8 +248,13 @@
     var stock = p.stock <= 0 ? '<div class="stock out"><i></i>Sold out for now</div>' : p.stock <= 5 ? '<div class="stock low"><i></i>Only ' + p.stock + ' left</div>' : '<div class="stock"><i></i>In stock, ready to ship</div>';
     var tag = p.stock <= 0 ? 'SOLD OUT' : p.tag ? p.tag.toUpperCase() : '';
     var acc = [['Description', p.desc], ['Details', 'Scent family: ' + p.scent + '. Scent notes: ' + p.notes.join(', ') + '. Hand-poured in small batches.'], ['Delivery and returns', 'Orders are packed within 2 working days and delivered in 3 to 7 working days. Delivery is free above ₹' + FREE_SHIP + '. Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.']];
+    var imgs = productImages(p);
+    var thumbsHtml = imgs.length > 1 ? '<div class="pdp-thumbs">' + imgs.map(function (src, idx) {
+      return '<button type="button" class="pdp-thumb' + (idx === 0 ? ' on' : '') + '" data-pdp-img="' + esc(src) + '" aria-label="Photo ' + (idx + 1) + '"><img src="' + esc(src) + '" alt="" loading="lazy"></button>';
+    }).join('') + '</div>' : '';
+    var galleryHtml = '<div class="pdp-gallery-wrap"><div class="gallery">' + (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') + '<img id="mainPdpImg" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '" loading="eager" data-ph="' + esc(p.name.charAt(0)) + '"></div>' + thumbsHtml + '</div>';
     return '<div class="wrap"><div class="crumbs"><a href="/" data-link>Home</a> / <a href="/shop" data-link>Shop</a> / <a href="/shop?scent=' + p.scent + '" data-link>' + p.scent + '</a> / ' + esc(p.name) + '</div>' +
-      '<div class="pdp"><div class="gallery">' + (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') + imgTag(p) + '</div><div>' +
+      '<div class="pdp">' + galleryHtml + '<div>' +
       '<p class="eyebrow">' + p.scent.toUpperCase() + '</p><h1>' + esc(p.name) + '</h1><div class="notes-row">' + p.notes.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div>' +
       '<div class="price">' + money(p.price) + '</div><p class="muted" style="font-size:17px;margin:0">' + esc(p.desc) + '</p>' + stock +
       '<div class="buy"><div class="qty"><button id="qm" aria-label="Decrease">−</button><span id="qv">1</span><button id="qp" aria-label="Increase">+</button></div><button class="btn green" style="flex:1" id="addBtn" data-slug="' + p.slug + '"' + (p.stock <= 0 ? ' disabled' : '') + '>' + (p.stock <= 0 ? 'Sold out' : 'Add to cart') + '</button></div>' +
@@ -518,6 +528,15 @@
   }
 
   function bind() {
+    $$('.pdp-thumb').forEach(function (btn) {
+      btn.onclick = function () {
+        var main = $('#mainPdpImg');
+        if (!main) return;
+        main.src = btn.dataset.pdpImg;
+        $$('.pdp-thumb').forEach(function (b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+      };
+    });
     var overlay = $('#overlay'); if (overlay) overlay.onclick = closeDrawers;
     var rt = $('#retry'); if (rt) rt.onclick = function () { Promise.all([loadCatalogue(), loadMe()]).then(route, route); };
     var sb = $('#searchBtn'); if (sb) sb.onclick = function () { var bar = $('#searchbar'); bar.classList.toggle('open'); if (bar.classList.contains('open')) $('#searchInput').focus(); };

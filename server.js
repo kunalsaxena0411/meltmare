@@ -322,6 +322,11 @@ function applyProduct(p, b, isNew) {
   if (isNew || b.notes !== undefined) set('notes', (Array.isArray(b.notes) ? b.notes : String(b.notes || '').split(',')).map((n) => str(n, 40)).filter(Boolean).slice(0, 4));
   if (isNew || b.tag !== undefined) set('tag', str(b.tag, 24));
   if (b.image !== undefined) { const v = str(b.image, 200); if (v && !/^\/(media|assets\/img)\/[\w./-]+$/.test(v)) throw bad('Invalid image'); set('image', v); }
+  if (b.images !== undefined) {
+    const arr = (Array.isArray(b.images) ? b.images : [b.images]).map((x) => str(x, 200)).filter((v) => /^\/(media|assets\/img)\/[\w./-]+$/.test(v));
+    set('images', arr);
+    if (arr[0] && !p.image) set('image', arr[0]);
+  }
   if (b.featured !== undefined) set('featured', !!b.featured);
   if (b.active !== undefined) set('active', !!b.active);
 }
