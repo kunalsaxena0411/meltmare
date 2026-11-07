@@ -1,4 +1,4 @@
-/* MELTMARE storefront: single page app, no build step.
+/* MELTMERE storefront: single page app, no build step.
    Products, accounts, orders and payments live on the server (see server.js and README.md).
    Only the shopping cart is kept in the browser (localStorage). */
 (function () {
@@ -7,8 +7,9 @@
   // ---------- config ----------
   var FREE_SHIP = 999; // overwritten from the server at start up
   var SHIP_FEE = 79;
-  var INFO = { email: 'hello@meltmare.com', phone: '', address: '', hours: '', policiesReviewed: false }; // overwritten from the server
+  var INFO = { email: 'hello@meltmere.com', phone: '', address: '', hours: '', policiesReviewed: false }; // overwritten from the server
   var SCENTS = ['Woody', 'Floral', 'Fresh', 'Sweet', 'Spiced'];
+  var SECTIONS = ['Royal Collection', 'Pearl Collection', 'Signature Collection'];
   var STATUSES = ['Pending payment', 'Paid', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
   var CUSTOMER_STATUS = { 'Pending payment': 'Waiting for payment', Paid: 'Order confirmed', Packed: 'Being packed', Shipped: 'On its way', Delivered: 'Delivered', Cancelled: 'Cancelled' };
 
@@ -23,7 +24,7 @@
 
   var POLICIES = {
     shipping: ['Shipping policy', ['We ship across India. Orders are packed within 2 working days and delivered in 3 to 7 working days, depending on your city.', 'Delivery is free on orders above ₹999. Below that, a flat delivery charge of ₹79 applies.', 'As soon as your order ships, its status updates in My account so you can follow it to your door.']],
-    refund: ['Refund policy', ['Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.', 'Refunds go back to the original payment method in 5 to 7 working days.', 'Write to us at hello@meltmare.com with your order number and a photo, and we will take care of the rest.']],
+    refund: ['Refund policy', ['Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.', 'Refunds go back to the original payment method in 5 to 7 working days.', 'Write to us at hello@meltmere.com with your order number and a photo, and we will take care of the rest.']],
     privacy: ['Privacy policy', ['We collect your name, email, phone number and address only to process orders and support you.', 'Payments are handled by Cashfree and we never store card details.', 'We do not sell your data. Ever.']],
     terms: ['Terms of service', ['Prices are in Indian rupees and include applicable taxes.', 'We may cancel an order for a stock or pricing error and will refund it in full.', 'By using this site you agree to these terms and to our other policies.']]
   };
@@ -51,7 +52,8 @@
     flame: '<svg viewBox="0 0 24 24"><path d="M12 3c2 3 5 5 5 9a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/></svg>',
     gift: '<svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1"/><path d="M3 9h18v3H3zM12 9v11M12 9c-2-4-6-3-5 0M12 9c2-4 6-3 5 0"/></svg>',
     shield: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
-    box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>'
+    box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>'
   };
 
   // ---------- api and state ----------
@@ -88,7 +90,12 @@
     user: function () { return S.user; }
   };
   var find = function (slug) { return S.products.filter(function (p) { return p.slug === slug; })[0]; };
-  var imgSrc = function (p) { return p.image || '/assets/img/' + p.slug + '.jpg'; };
+  var productImages = function (p) {
+    if (p && p.images && p.images.length) return p.images;
+    if (p && p.image) return [p.image, '/assets/img/placement-ideas.png'];
+    return ['/assets/img/' + (p ? p.slug : 'candle') + '.jpg', '/assets/img/placement-ideas.png'];
+  };
+  var imgSrc = function (p) { return productImages(p)[0]; };
   var cartLines = function () {
     return store.cart().map(function (l) { var p = find(l.slug); return p ? { p: p, qty: l.qty } : null; }).filter(Boolean);
   };
@@ -135,7 +142,7 @@
     var fab = p.stock > 0 ? '<button class="add-fab" data-add="' + p.slug + '" aria-label="Add ' + esc(p.name) + ' to cart">' + I.plus + '</button>' : '';
     var low = p.stock > 0 && p.stock <= 5 ? '<div class="low">Only ' + p.stock + ' left</div>' : '';
     return '<article class="card"><div class="imgbox">' + tag + '<a href="/product/' + p.slug + '" data-link style="display:block;width:100%;height:100%">' + imgTag(p) + '</a>' + fab + '</div>' +
-      '<div class="meta"><div class="scent">' + esc(p.scent) + '</div><h3><a href="/product/' + p.slug + '" data-link>' + esc(p.name) + '</a></h3>' +
+      '<div class="meta">' + (p.section ? '<div class="card-sec" style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:2px">' + esc(p.section) + '</div>' : '') + '<div class="scent">' + esc(p.scent) + '</div><h3><a href="/product/' + p.slug + '" data-link>' + esc(p.name) + '</a></h3>' +
       '<div class="notes">' + p.notes.map(esc).join(' · ') + '</div><div class="price">' + money(p.price) + '</div>' + low + '</div></article>';
   }
 
@@ -150,14 +157,14 @@
     return '<div class="announce">Free delivery on orders above ₹' + FREE_SHIP + '</div>' +
       '<header class="header"><div class="wrap row">' +
       '<div class="left"><button class="icon-btn menu-btn" data-open="menu" aria-label="Open menu">' + I.menu + '</button><nav>' + navHtml + '</nav></div>' +
-      '<a href="/" data-link class="logo" aria-label="MELTMARE home"><img src="/assets/logo-green.png" alt=""><span>MELTMARE</span></a>' +
+      '<a href="/" data-link class="logo" aria-label="MELTMERE home"><img src="/assets/logo-green.png" alt=""><span>MELTMERE</span></a>' +
       '<div class="right"><button class="icon-btn" id="searchBtn" aria-label="Search">' + I.search + '</button>' +
       '<a class="icon-btn" href="' + (user ? '/account' : '/login') + '" data-link aria-label="Account">' + I.user + '</a>' +
       '<button class="icon-btn" data-open="cart" aria-label="Cart">' + I.bag + '<span class="badge-count" id="cartCount" style="' + (cnt ? '' : 'display:none') + '">' + cnt + '</span></button></div>' +
       '</div><div class="searchbar" id="searchbar"><div class="wrap"><input id="searchInput" placeholder="Search candles by name or scent" aria-label="Search"><div class="search-results" id="searchResults"></div></div></div></header>' +
       '<main>' + inner + '</main>' + footer() +
       '<div class="overlay" id="overlay"></div>' +
-      '<aside class="drawer left" id="menuDrawer" aria-label="Menu"><div class="drawer-head"><h3>MELTMARE</h3><button class="close-btn" data-close aria-label="Close">×</button></div>' +
+      '<aside class="drawer left" id="menuDrawer" aria-label="Menu"><div class="drawer-head"><h3>MELTMERE</h3><button class="close-btn" data-close aria-label="Close">×</button></div>' +
       '<div class="drawer-nav">' + [['/', 'Home'], ['/shop', 'Shop'], ['/story', 'Our Story'], ['/contact', 'Contact'], ['/faq', 'FAQ'], ['/candle-care', 'Candle care'], [user ? '/account' : '/login', user ? 'My account' : 'Sign in']].map(function (n) { return '<a href="' + n[0] + '" data-link>' + n[1] + '</a>'; }).join('') + '</div></aside>' +
       '<aside class="drawer right" id="cartDrawer" aria-label="Cart"></aside>';
   }
@@ -165,11 +172,11 @@
   function footer() {
     var list = function (arr) { return '<ul>' + arr.map(function (a) { return '<li><a href="' + a[0] + '" data-link>' + a[1] + '</a></li>'; }).join('') + '</ul>'; };
     return '<footer class="footer"><div class="wrap"><div class="cols">' +
-      '<div class="brand"><img src="/assets/logo-green.png" alt="MELTMARE"><p class="tagline">Find your scent. Light your mood.</p><p>Candles and décor made to make your space feel calm, personal and complete.</p></div>' +
+      '<div class="brand"><img src="/assets/logo-green.png" alt="MELTMERE"><p class="tagline">Find your scent. Light your mood.</p><p>Candles and décor made to make your space feel calm, personal and complete.</p><a href="https://www.instagram.com/meltmere_candles" target="_blank" rel="noopener noreferrer" class="social-link">' + I.instagram + '<span>@meltmere_candles</span></a></div>' +
       '<div><h5>SHOP</h5>' + list([['/shop', 'Shop all']].concat(SCENTS.map(function (s) { return ['/shop?scent=' + s, s]; }))) + '</div>' +
       '<div><h5>HELP</h5>' + list([['/faq', 'FAQ'], ['/candle-care', 'Candle care'], ['/contact', 'Contact us'], ['/policies/shipping', 'Shipping policy'], ['/policies/refund', 'Refund policy']]) + '</div>' +
       '<div><h5>JOIN THE CIRCLE</h5><p style="color:rgba(255,253,248,.75);font-size:14px;margin:0">New arrivals and offers, straight to your inbox.</p><form class="join" data-news><input type="email" required placeholder="Your email" aria-label="Email"><button>JOIN</button></form></div>' +
-      '</div><div class="bottom"><span>' + esc(INFO.email) + (INFO.phone ? ' · ' + esc(INFO.phone) : '') + '</span><span>© 2026 MELTMARE. All rights reserved.</span></div>' +
+      '</div><div class="bottom"><span>' + esc(INFO.email) + (INFO.phone ? ' · ' + esc(INFO.phone) : '') + ' · <a href="https://www.instagram.com/meltmere_candles" target="_blank" rel="noopener noreferrer" style="color:inherit">Instagram</a></span><span>© 2026 MELTMERE. All rights reserved.</span></div>' +
       '<div class="bottom" style="border:0;margin-top:0;padding-top:10px"><div class="pay"><span>UPI</span><span>Visa</span><span>Mastercard</span><span>RuPay</span><span>Netbanking</span></div><div class="legal"><a href="/policies/privacy" data-link>Privacy</a><a href="/policies/terms" data-link>Terms</a></div></div>' +
       '</div></footer>';
   }
@@ -208,29 +215,45 @@
     var strip = ['Find your scent. Light your mood.', 'Hand-poured in small batches', 'Clean-burning wax', 'Botanical fragrance oils', 'Every room has a fragrance. Find yours.'];
     var track = strip.map(function (s) { return '<span>' + s + '</span><b>✦</b>'; }).join('');
     return '<section class="hero"><div class="bgimg"><img src="/assets/img/hero.jpg" alt="" data-ph=""></div><div class="wrap inner">' +
-      '<p class="eyebrow gold">MELTMARE · SCENTED CANDLES &amp; DÉCOR</p><h1>Warm light<br><em>for every room.</em></h1>' +
-      '<p class="lead">Candles and décor from MELTMARE, made to make your space feel calm, personal and complete.</p>' +
+      '<p class="eyebrow gold">MELTMERE · SCENTED CANDLES &amp; DÉCOR</p><h1>Warm light<br><em>for every room.</em></h1>' +
+      '<p class="lead">Candles and décor from MELTMERE, made to make your space feel calm, personal and complete.</p>' +
       '<div class="cta"><a class="btn gold" href="/shop" data-link>Shop the collection →</a><a class="btn outline" href="/story" data-link>Our story</a></div></div><div class="mouse"></div></section>' +
       '<div class="marquee"><div class="track">' + track + track + '</div></div>' +
       '<section class="section"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">THE EDIT</p><h2>Our favourites</h2></div><div class="grid reveal">' + fav.map(card).join('') + '</div>' +
       '<div class="center mt"><a class="text-link" href="/shop" data-link>View all products →</a></div></div></section>' +
-      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SHOP BY SCENT</p><h2>Find your scent</h2><p>Every MELTMARE candle begins with a fragrance. Choose the mood first — the room follows.</p></div><div class="tiles reveal">' +
-      SCENTS.map(function (s) { return '<a class="tile" href="/shop?scent=' + s + '" data-link><img src="/assets/img/scent-' + s.toLowerCase() + '.jpg" alt="" data-ph=""><div><h3>' + s + '</h3><span>EXPLORE</span></div></a>'; }).join('') + '</div></div></section>' +
+      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal center" style="max-width:700px;margin-inline:auto;margin-bottom:44px"><p class="eyebrow gold">THE SIGNATURE EDITIONS</p><h2>Find your scent</h2><p>Every MELTMERE candle begins with a fragrance. Explore our creations across three signature collections.</p></div><div class="tiles reveal">' +
+      [
+        { name: 'Royal Collection', tag: 'Artisan Vessels', desc: 'Rustic bronze and hand-carved wooden multi-wick bowls that cast a flickering golden glow.', img: '/assets/img/royal-bronze-1.jpg', count: '5 Designs' },
+        { name: 'Pearl Collection', tag: 'Pearled Sand Wax', desc: 'Loose scented pearled sand wax in sculptured glass dishes, complete with natural wicks.', img: '/assets/img/pearl-candle-1.jpg', count: '5 Designs' },
+        { name: 'Signature Collection', tag: 'Classic Essentials', desc: 'Timeless hand-poured glass tumbler candles with clean burns and comforting botanical scents.', img: '/assets/img/vanilla-linen.jpg', count: '5 Scents' }
+      ].map(function (c) {
+        return '<a class="tile" href="/shop?section=' + encodeURIComponent(c.name) + '" data-link><img src="' + c.img + '" alt="" data-ph="">' +
+          '<div class="tile-content">' +
+          '<div class="tile-top"><span class="tile-badge">' + c.tag + '</span><span class="tile-count">' + c.count + '</span></div>' +
+          '<div class="tile-bottom"><h3>' + c.name + '</h3><p class="tile-desc">' + c.desc + '</p>' +
+          '<div class="tile-action"><span>EXPLORE COLLECTION</span><svg class="tile-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>' +
+          '</div></div></a>';
+      }).join('') + '</div></div></section>' +
       '<section class="promise"><div class="wrap cols">' + [[I.flame, 'Thoughtfully made', 'Designed with care, finished by hand'], [I.gift, 'Gift ready', 'Beautiful enough to give as it is'], [I.shield, 'Secure payment', 'Pay safely with UPI, cards or netbanking'], [I.box, 'Delivered with care', 'Packed to arrive in perfect condition']].map(function (x) { return '<div>' + x[0] + '<h4>' + x[1] + '</h4><p>' + x[2] + '</p></div>'; }).join('') + '</div></section>' +
       '<section class="section"><div class="wrap split"><div class="pic reveal"><img src="/assets/img/story.jpg" alt="" data-ph=""></div><div class="reveal"><p class="eyebrow">OUR STORY</p><h2>Made to be lit, kept and gifted</h2>' +
       '<p>Every candle starts with one question: what does this moment smell like? From cedar evenings to sea salt mornings, we choose the fragrance first and design everything else around it.</p><p>We keep our range small and our scents honest, so every candle is one you will want to light again.</p><a class="btn green" href="/story" data-link>Read our story</a></div></div></section>' +
       '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SAMPLE REVIEWS</p><h2>Loved by our customers</h2></div><div class="reviews reveal">' +
       REVIEWS.map(function (r) { return '<div class="review"><div class="stars">★★★★★</div><p>“' + r[0] + '”</p><b>' + r[1].toUpperCase() + '</b></div>'; }).join('') + '</div></div></section>' +
-      '<section class="section bg-deep news"><div class="wrap reveal"><p class="eyebrow gold">NEWSLETTER</p><h2>Join the MELTMARE circle</h2><p>New arrivals and offers, straight to your inbox.</p><form data-news><input type="email" required placeholder="Your email" aria-label="Email"><button class="btn gold">SUBSCRIBE</button></form></div></section>';
+      '<section class="section bg-deep news"><div class="wrap reveal"><p class="eyebrow gold">NEWSLETTER</p><h2>Join the MELTMERE circle</h2><p>New arrivals and offers, straight to your inbox.</p><form data-news><input type="email" required placeholder="Your email" aria-label="Email"><button class="btn gold">SUBSCRIBE</button></form></div></section>';
   }
 
   function pageShop() {
-    var qs = new URLSearchParams(location.search), scent = qs.get('scent') || 'All', sort = qs.get('sort') || 'new';
-    var items = store.products().filter(function (p) { return p.active && (scent === 'All' || p.scent === scent); });
+    var qs = new URLSearchParams(location.search), section = qs.get('section') || 'All', scent = qs.get('scent') || 'All', sort = qs.get('sort') || 'new';
+    var items = store.products().filter(function (p) {
+      if (!p.active) return false;
+      if (section !== 'All' && p.section !== section) return false;
+      if (scent !== 'All' && p.scent !== scent) return false;
+      return true;
+    });
     if (sort === 'asc') items.sort(function (a, b) { return a.price - b.price; });
     if (sort === 'desc') items.sort(function (a, b) { return b.price - a.price; });
-    var chips = ['All'].concat(SCENTS).map(function (s) { return '<a class="chip ' + (s === scent ? 'on' : '') + '" href="/shop' + (s === 'All' ? '' : '?scent=' + s) + (sort !== 'new' ? (s === 'All' ? '?' : '&') + 'sort=' + sort : '') + '" data-link>' + s + '</a>'; }).join('');
-    return '<div class="page-head"><p class="eyebrow">THE COLLECTION</p><h1>Shop all</h1><p>Everything MELTMARE, in one place.</p></div><div class="wrap"><div class="toolbar"><div class="chips" style="margin:0;justify-content:flex-start">' + chips + '</div>' +
+    var chips = ['All'].concat(SECTIONS).map(function (s) { return '<a class="chip ' + (s === section ? 'on' : '') + '" href="/shop' + (s === 'All' ? '' : '?section=' + encodeURIComponent(s)) + (sort !== 'new' ? (s === 'All' ? '?' : '&') + 'sort=' + sort : '') + '" data-link>' + s + '</a>'; }).join('');
+    return '<div class="page-head"><p class="eyebrow">THE COLLECTION</p><h1>Shop all</h1><p>Everything MELTMERE, in one place.</p></div><div class="wrap"><div class="toolbar"><div class="chips" style="margin:0;justify-content:flex-start">' + chips + '</div>' +
       '<select id="sort" aria-label="Sort"><option value="new"' + (sort === 'new' ? ' selected' : '') + '>Newest</option><option value="asc"' + (sort === 'asc' ? ' selected' : '') + '>Price: low to high</option><option value="desc"' + (sort === 'desc' ? ' selected' : '') + '>Price: high to low</option></select></div>' +
       '<div class="grid">' + items.map(card).join('') + '</div><p class="center muted" style="margin:40px 0 80px">Showing ' + items.length + ' of ' + store.products().filter(function (p) { return p.active; }).length + '</p></div>';
   }
@@ -241,10 +264,23 @@
     var more = store.products().filter(function (x) { return x.active && x.scent === p.scent && x.slug !== p.slug; }).slice(0, 4);
     var stock = p.stock <= 0 ? '<div class="stock out"><i></i>Sold out for now</div>' : p.stock <= 5 ? '<div class="stock low"><i></i>Only ' + p.stock + ' left</div>' : '<div class="stock"><i></i>In stock, ready to ship</div>';
     var tag = p.stock <= 0 ? 'SOLD OUT' : p.tag ? p.tag.toUpperCase() : '';
-    var acc = [['Description', p.desc], ['Details', 'Scent family: ' + p.scent + '. Scent notes: ' + p.notes.join(', ') + '. Hand-poured in small batches.'], ['Delivery and returns', 'Orders are packed within 2 working days and delivered in 3 to 7 working days. Delivery is free above ₹' + FREE_SHIP + '. Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.']];
+    var acc = [['Description', p.desc], ['Specifications', 'Collection: ' + (p.section || 'Royal Collection') + ' · Net Weight: ' + (p.size || '200g / 6.8 oz') + ' · Burn Time: ' + (p.burnTime || '40 hours') + ' · Scent Family: ' + p.scent + ' · Scent notes: ' + p.notes.join(', ')], ['Delivery and returns', 'Orders are packed within 2 working days and delivered in 3 to 7 working days. Delivery is free above ₹' + FREE_SHIP + '. Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.']];
+    var imgs = productImages(p);
+    var thumbsHtml = imgs.length > 1 ? '<div class="pdp-thumbs">' + imgs.map(function (src, idx) {
+      return '<button type="button" class="pdp-thumb' + (idx === 0 ? ' on' : '') + '" data-pdp-img="' + esc(src) + '" aria-label="Photo ' + (idx + 1) + '"><img src="' + esc(src) + '" alt="" loading="lazy"></button>';
+    }).join('') + '</div>' : '';
+    var galleryHtml = '<div class="pdp-gallery-wrap">' +
+      '<div class="gallery" id="pdpGallery">' +
+      '<div class="gallery-bg" id="galleryBg"></div>' +
+      (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') +
+      '<button type="button" class="gallery-zoom-btn" id="galleryZoomBtn" title="Click to expand" aria-label="Expand image">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>' +
+      '</button>' +
+      '<img id="mainPdpImg" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '" loading="eager" data-ph="' + esc(p.name.charAt(0)) + '" style="cursor:zoom-in">' +
+      '</div>' + thumbsHtml + '</div>';
     return '<div class="wrap"><div class="crumbs"><a href="/" data-link>Home</a> / <a href="/shop" data-link>Shop</a> / <a href="/shop?scent=' + p.scent + '" data-link>' + p.scent + '</a> / ' + esc(p.name) + '</div>' +
-      '<div class="pdp"><div class="gallery">' + (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') + imgTag(p) + '</div><div>' +
-      '<p class="eyebrow">' + p.scent.toUpperCase() + '</p><h1>' + esc(p.name) + '</h1><div class="notes-row">' + p.notes.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div>' +
+      '<div class="pdp">' + galleryHtml + '<div>' +
+      '<p class="eyebrow">' + p.scent.toUpperCase() + '</p><h1>' + esc(p.name) + '</h1><div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px"><span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;background:var(--forest);color:var(--gold);padding:4px 10px;border-radius:4px;font-weight:600">' + esc(p.section || 'Royal Collection') + '</span><span style="font-size:12px;color:var(--muted);background:var(--beige);border:1px solid var(--sand);padding:4px 10px;border-radius:4px">' + esc(p.size || '200g / 6.8 oz') + '</span><span style="font-size:12px;color:var(--muted);background:var(--beige);border:1px solid var(--sand);padding:4px 10px;border-radius:4px">' + esc(p.burnTime || '40 hours') + '</span></div><div class="notes-row">' + p.notes.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div>' +
       '<div class="price">' + money(p.price) + '</div><p class="muted" style="font-size:17px;margin:0">' + esc(p.desc) + '</p>' + stock +
       '<div class="buy"><div class="qty"><button id="qm" aria-label="Decrease">−</button><span id="qv">1</span><button id="qp" aria-label="Increase">+</button></div><button class="btn green" style="flex:1" id="addBtn" data-slug="' + p.slug + '"' + (p.stock <= 0 ? ' disabled' : '') + '>' + (p.stock <= 0 ? 'Sold out' : 'Add to cart') + '</button></div>' +
       '<div class="assure"><span>✓ Free delivery above ₹' + FREE_SHIP + '</span><span>✓ Easy replacement for transit damage</span></div>' +
@@ -253,7 +289,7 @@
   }
 
   function pageStory() {
-    return '<div class="page-head"><p class="eyebrow">SINCE THE FIRST POUR</p><h1>Our story</h1></div><div class="prose"><p style="font-size:21px;font-family:var(--serif)">MELTMARE began with a simple idea: a candle should do more than light a room. It should change how the room feels.</p>' +
+    return '<div class="page-head"><p class="eyebrow">SINCE THE FIRST POUR</p><h1>Our story</h1></div><div class="prose"><p style="font-size:21px;font-family:var(--serif)">MELTMERE began with a simple idea: a candle should do more than light a room. It should change how the room feels.</p>' +
       '<p>Every candle starts with one question: what does this moment smell like? From cedar evenings to sea salt mornings, we choose the fragrance first and design everything else around it. The wax, the wick, the jar — each one exists to carry the scent, never to shout over it.</p>' +
       '<p>We keep our range small and our scents honest, so every candle is one you will want to light again. Light one, breathe in, and let the room do the rest.</p><div class="quote">“Scent first, everything else follows.”</div>' +
       '<div class="center"><p class="eyebrow">Shop by scent</p><div class="chips">' + SCENTS.map(function (s) { return '<a class="chip" href="/shop?scent=' + s + '" data-link>' + s + '</a>'; }).join('') + '</div></div></div>';
@@ -273,13 +309,13 @@
 
   function pageCare() {
     var steps = ['Trim the wick to about 5 mm before every burn', 'On the first burn, let the wax melt right to the edge of the jar, usually 2 to 3 hours', 'Burn for no more than 4 hours at a time', 'Keep the candle away from drafts, children, pets and anything that can catch fire', 'Stop using it when about 1 cm of wax is left'];
-    return '<div class="page-head"><p class="eyebrow">CANDLE CARE</p><h1>Burn it right</h1><p>A few simple habits help every MELTMARE candle burn cleaner, longer and safer.</p></div><div class="steps wrap">' +
+    return '<div class="page-head"><p class="eyebrow">CANDLE CARE</p><h1>Burn it right</h1><p>A few simple habits help every MELTMERE candle burn cleaner, longer and safer.</p></div><div class="steps wrap">' +
       steps.map(function (s, i) { return '<div class="step"><i>' + (i + 1) + '</i><p>' + s + '</p></div>'; }).join('') + '</div>';
   }
 
   function pagePolicy(key) {
     var pol = POLICIES[key]; if (!pol) return page404();
-    return '<div class="page-head"><p class="eyebrow">MELTMARE POLICIES</p><h1>' + pol[0] + '</h1></div><div class="prose">' + (INFO.policiesReviewed ? '' : '<span class="draft">Draft policy — to be reviewed before launch.</span>') + pol[1].map(function (t) { return '<p>' + t + '</p>'; }).join('') + '</div>';
+    return '<div class="page-head"><p class="eyebrow">MELTMERE POLICIES</p><h1>' + pol[0] + '</h1></div><div class="prose">' + (INFO.policiesReviewed ? '' : '<span class="draft">Draft policy — to be reviewed before launch.</span>') + pol[1].map(function (t) { return '<p>' + t + '</p>'; }).join('') + '</div>';
   }
 
   function page404() {
@@ -295,13 +331,24 @@
     return '<div class="panel-box" style="align-self:start"><h3>Order summary</h3><div class="totals"><div><span>Subtotal</span><span>' + money(sub) + '</span></div><div><span>Delivery</span><span>' + (ship ? money(ship) : 'Free') + '</span></div><div class="grand"><span>Total</span><span>' + money(sub + ship) + '</span></div></div><div style="display:grid;gap:12px;margin-top:20px">' + (extra || '') + '</div></div>';
   }
 
-  function pageLogin() {
+    function pageLogin() {
     if (store.user()) { go(safeNext(new URLSearchParams(location.search).get('next') || '/account'), true); return ''; }
-    return '<div class="auth"><h1>Welcome to MELTMARE</h1><p class="muted">Sign in with your email or phone number</p><div class="tabs"><button class="on" data-mode="email">EMAIL</button><button data-mode="phone">PHONE</button></div>' +
-      '<form id="loginForm"><div class="field" id="idField"><label id="idLabel">Email</label><input type="email" id="idInput" required autocomplete="email"></div>' +
+    return '<div class="auth"><h1>Welcome to MELTMERE</h1><p class="muted">Sign in with your mobile number to view your orders</p>' +
+      '<form id="loginForm"><div class="field" id="idField"><label id="idLabel">Mobile number</label>' +
+      '<div style="display:flex;gap:10px">' +
+      '<select id="countryCode" name="countryCode" style="width:110px;flex:none;padding:12px 8px">' +
+      '<option value="+91" selected>+91 (IN)</option>' +
+      '<option value="+1">+1 (US)</option>' +
+      '<option value="+44">+44 (UK)</option>' +
+      '<option value="+971">+971 (AE)</option>' +
+      '<option value="+65">+65 (SG)</option>' +
+      '<option value="+61">+61 (AU)</option>' +
+      '</select>' +
+      '<input type="tel" id="idInput" placeholder="98765 43210" required pattern="[0-9]{10}" title="Please enter a valid 10 digit mobile number" autocomplete="tel-national" style="flex:1">' +
+      '</div></div>' +
       '<div id="otpBox" style="display:none"><label>Enter the 6 digit code</label><div class="otp">' + [0, 1, 2, 3, 4, 5].map(function () { return '<input type="text" inputmode="numeric" maxlength="1" aria-label="Digit">'; }).join('') + '</div><p class="note" id="otpNote"></p><button type="button" class="link-btn" id="resendBtn" style="display:none">Resend code</button></div>' +
-      '<div id="nameField" class="field" style="display:none"><label>Your name</label><input type="text" id="nameInput" autocomplete="name" maxlength="80"></div><div class="err" id="loginErr"></div>' +
-      '<button class="btn green block" id="loginBtn">Send OTP</button></form><p class="note" style="margin-top:20px">New here? Just enter your email or phone. We will create your account when you verify the code.</p></div>';
+      '<div id="nameField" class="field" style="display:none"><label>Your full name</label><input type="text" id="nameInput" autocomplete="name" maxlength="80" placeholder="e.g. Priya Sharma"></div><div class="err" id="loginErr"></div>' +
+      '<button class="btn green block" id="loginBtn">Send OTP</button></form><p class="note" style="margin-top:20px;text-align:center">New here? Just enter your mobile number. We will create your account when you verify the code.</p></div>';
   }
 
   function accountShell(u, tab, body) {
@@ -322,7 +369,12 @@
     });
   }
   function profileHtml(u) {
-    return '<form class="panel-box" id="profileForm" style="max-width:520px"><div class="field"><label>Name</label><input type="text" name="name" required maxlength="80" value="' + esc(u.name) + '"></div><div class="field"><label>Email</label><input type="email" name="email" value="' + esc(u.email || '') + '"></div><div class="field"><label>Phone</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter a valid 10 digit phone number" value="' + esc(u.phone || '') + '"></div><div class="field"><label>Saved address</label><textarea name="address" maxlength="300">' + esc(u.address || '') + '</textarea></div><div class="err" id="profileErr"></div><div style="display:flex;gap:10px"><button class="btn green">Save</button><button type="button" class="btn outline-dark" id="logout">Log out</button></div></form>';
+    return '<form class="panel-box" id="profileForm" style="max-width:520px">' +
+      '<div class="field"><label>Your full name</label><input type="text" name="name" required maxlength="80" value="' + esc(u.name) + '"></div>' +
+      '<div class="field"><label>Mobile number</label><input type="tel" name="phone" readonly style="background:var(--beige);cursor:not-allowed" value="' + esc(u.phone || '') + '"><span class="note">Mobile number is your verified sign-in identity.</span></div>' +
+      '<div class="field"><label>Email address <span class="note" style="text-transform:none;font-weight:normal">(Optional — for order confirmation emails)</span></label><input type="email" name="email" placeholder="name@example.com" value="' + esc(u.email || '') + '"></div>' +
+      '<div class="field"><label>Saved delivery address</label><textarea name="address" maxlength="300" placeholder="Flat, building, street, city and pin">' + esc(u.address || '') + '</textarea></div>' +
+      '<div class="err" id="profileErr"></div><div style="display:flex;gap:10px;margin-top:20px"><button class="btn green">Save changes</button><button type="button" class="btn outline-dark" id="logout">Log out</button></div></form>';
   }
   function orderRow(o) {
     var steps = ['Paid', 'Packed', 'Shipped', 'Delivered'], idx = steps.indexOf(o.status);
@@ -367,11 +419,11 @@
 
   // ---------- admin ----------
   function adminLoginHtml() {
-    return '<div class="admin" style="display:grid;place-items:center;padding:24px"><form id="adminLogin" class="panel-box" style="width:min(420px,100%)"><p class="eyebrow">MELTMARE ADMIN</p><h3 style="font-size:30px">Sign in to manage the store</h3><div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div><div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div><div class="err" id="adminErr"></div><button class="btn green block">Sign in</button></form></div>';
+    return '<div class="admin" style="display:grid;place-items:center;padding:24px"><form id="adminLogin" class="panel-box" style="width:min(420px,100%)"><p class="eyebrow">MELTMERE ADMIN</p><h3 style="font-size:30px">Sign in to manage the store</h3><div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div><div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div><div class="err" id="adminErr"></div><button class="btn green block">Sign in</button></form></div>';
   }
   function adminFrame(tab, body) {
     var tabs = ['dashboard', 'products', 'orders', 'messages'].map(function (t) { return '<a class="chip ' + (t === tab ? 'on' : '') + '" href="/admin?tab=' + t + '" data-link style="text-transform:capitalize">' + t + '</a>'; }).join('');
-    return '<div class="admin"><div class="admin-top"><div class="wrap row"><b>MELTMARE Admin</b><div><a class="btn outline" href="/" data-link style="padding:8px 16px">View store</a> <button class="btn outline" id="adminOut" style="padding:8px 16px">Sign out</button></div></div></div><div class="wrap"><div class="admin-nav">' + tabs + '</div>' + body + '<div style="height:60px"></div></div></div>';
+    return '<div class="admin"><div class="admin-top"><div class="wrap row"><b>MELTMERE Admin</b><div><a class="btn outline" href="/" data-link style="padding:8px 16px">View store</a> <button class="btn outline" id="adminOut" style="padding:8px 16px">Sign out</button></div></div></div><div class="wrap"><div class="admin-nav">' + tabs + '</div>' + body + '<div style="height:60px"></div></div></div>';
   }
   function pageAdmin() {
     return api('GET', '/api/admin/me').then(function (j) {
@@ -390,15 +442,15 @@
     if (tab === 'products') {
       return api('GET', '/api/admin/products').then(function (j) {
         var rows = j.products.map(function (p) {
-          return '<tr><td><div style="display:flex;gap:10px;align-items:center"><div style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:#eee;flex:none">' + imgTag(p) + '</div><div><b>' + esc(p.name) + '</b><br><label class="note" style="cursor:pointer;text-decoration:underline">Change photo<input type="file" accept="image/jpeg,image/png,image/webp" data-img="' + p.slug + '" style="display:none"></label></div></div></td><td>' + esc(p.scent) + '</td>' +
+          return '<tr><td><div style="display:flex;gap:10px;align-items:center"><div style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:#eee;flex:none">' + imgTag(p) + '</div><div><b>' + esc(p.name) + '</b><br><label class="note" style="cursor:pointer;text-decoration:underline">Change photo<input type="file" accept="image/jpeg,image/png,image/webp" data-img="' + p.slug + '" style="display:none"></label></div></div></td><td><select data-pf="section" data-slug="' + p.slug + '">' + SECTIONS.map(function (s) { return '<option' + (s === (p.section || 'Royal Collection') ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></td><td>' + esc(p.scent) + '</td>' +
             '<td><input type="number" min="1" data-pf="price" data-slug="' + p.slug + '" value="' + p.price + '"></td><td><input type="number" min="0" data-pf="stock" data-slug="' + p.slug + '" value="' + p.stock + '"></td>' +
             '<td><input type="checkbox" data-pf="featured" data-slug="' + p.slug + '"' + (p.featured ? ' checked' : '') + '></td><td><input type="checkbox" data-pf="active" data-slug="' + p.slug + '"' + (p.active ? ' checked' : '') + '></td></tr>';
         }).join('');
-        var add = '<form class="panel-box" id="addProduct" style="margin-top:32px"><h3>Add a product</h3><div class="form-grid two"><div class="field"><label>Name</label><input type="text" name="name" required maxlength="80"></div><div class="field"><label>Scent family</label><select name="scent" style="width:100%">' + SCENTS.map(function (s) { return '<option>' + s + '</option>'; }).join('') + '</select></div></div>' +
-          '<div class="form-grid two"><div class="field"><label>Price (₹)</label><input type="number" name="price" min="1" required></div><div class="field"><label>Stock</label><input type="number" name="stock" min="0" required value="10"></div></div>' +
-          '<div class="form-grid two"><div class="field"><label>Scent notes (comma separated)</label><input type="text" name="notes" placeholder="Cedarwood, Amber"></div><div class="field"><label>Tag (optional)</label><input type="text" name="tag" maxlength="24" placeholder="New"></div></div>' +
+        var add = '<form class="panel-box" id="addProduct" style="margin-top:32px"><h3>Add a product</h3><div class="form-grid two"><div class="field"><label>Name</label><input type="text" name="name" required maxlength="80"></div><div class="field"><label>Collection Section</label><select name="section" style="width:100%">' + SECTIONS.map(function (s) { return '<option>' + s + '</option>'; }).join('') + '</select></div></div><div class="form-grid two"><div class="field"><label>Scent family</label><select name="scent" style="width:100%">' + SCENTS.map(function (s) { return '<option>' + s + '</option>'; }).join('') + '</select></div><div class="field"><label>Price (₹)</label><input type="number" name="price" min="1" required></div></div><div class="form-grid two"><div class="field"><label>Stock</label><input type="number" name="stock" min="0" required value="10"></div><div class="field"><label>Size</label><input type="text" name="size" placeholder="200g / 6.8 oz" value="200g / 6.8 oz"></div></div><div class="form-grid two"><div class="field"><label>Burn time</label><input type="text" name="burnTime" placeholder="40 hours" value="40 hours"></div>' +
+          '<div class="field"><label>Tag (optional)</label><input type="text" name="tag" maxlength="24" placeholder="New"></div></div>' +
+          '<div class="field"><label>Scent notes (comma separated)</label><input type="text" name="notes" placeholder="Cedarwood, Amber"></div>' +
           '<div class="field"><label>Description</label><textarea name="desc" maxlength="600"></textarea></div><div class="field"><label>Photo (JPG, PNG or WebP, up to 5 MB)</label><input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></div><div class="err" id="addErr"></div><button class="btn green">Add product</button></form>';
-        return '<div class="table-wrap"><table><tr><th>Product</th><th>Scent</th><th>Price</th><th>Stock</th><th>Featured</th><th>Active</th></tr>' + rows + '</table></div>' + add;
+        return '<div class="table-wrap"><table><tr><th>Product</th><th>Collection</th><th>Scent</th><th>Price</th><th>Stock</th><th>Featured</th><th>Active</th></tr>' + rows + '</table></div>' + add;
       });
     }
     if (tab === 'orders') {
@@ -463,7 +515,7 @@
   }
 
   // ---------- router ----------
-  var TITLES = { '/': 'MELTMARE: Scented Candles for Every Mood', '/shop': 'Shop Scented Candles, MELTMARE', '/story': 'Our Story, MELTMARE', '/contact': 'Contact, MELTMARE', '/faq': 'Help and FAQ, MELTMARE', '/candle-care': 'How to Burn a Candle, MELTMARE', '/cart': 'Your Cart, MELTMARE', '/login': 'Sign In, MELTMARE', '/account': 'My Account, MELTMARE', '/checkout': 'Checkout, MELTMARE', '/admin': 'Admin, MELTMARE' };
+  var TITLES = { '/': 'MELTMERE: Scented Candles for Every Mood', '/shop': 'Shop Scented Candles, MELTMERE', '/story': 'Our Story, MELTMERE', '/contact': 'Contact, MELTMERE', '/faq': 'Help and FAQ, MELTMERE', '/candle-care': 'How to Burn a Candle, MELTMERE', '/cart': 'Your Cart, MELTMERE', '/login': 'Sign In, MELTMERE', '/account': 'My Account, MELTMERE', '/checkout': 'Checkout, MELTMERE', '/admin': 'Admin, MELTMERE' };
   var routeSeq = 0;
 
   function go(url, replace) { if (replace) history.replaceState(null, '', url); else history.pushState(null, '', url); var p = route(); window.scrollTo(0, 0); return p; }
@@ -496,7 +548,7 @@
       $('#app').innerHTML = shell(html);
       renderCartDrawer();
       var pr = (m = path.match(/^\/product\/([\w-]+)$/)) && find(m[1]);
-      document.title = pr ? pr.name + ', scented candle | MELTMARE' : TITLES[path] || (path.indexOf('/policies') === 0 ? 'Policies, MELTMARE' : 'MELTMARE');
+      document.title = pr ? pr.name + ', scented candle | MELTMERE' : TITLES[path] || (path.indexOf('/policies') === 0 ? 'Policies, MELTMERE' : 'MELTMERE');
       bind();
       var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.08 }) : null;
       $$('.reveal').forEach(function (el) { io ? io.observe(el) : el.classList.add('in'); });
@@ -517,6 +569,55 @@
   }
 
   function bind() {
+    function updateMainImg(src) {
+      var main = $('#mainPdpImg');
+      var gal = $('#pdpGallery');
+      var bg = $('#galleryBg');
+      if (!main) return;
+      main.src = src;
+      if (bg) bg.style.backgroundImage = 'url("' + src + '")';
+      var testImg = new Image();
+      testImg.onload = function () {
+        if (testImg.naturalHeight > testImg.naturalWidth * 1.15) {
+          main.classList.add('contain-fit');
+          if (gal) gal.classList.add('has-contain');
+        } else {
+          main.classList.remove('contain-fit');
+          if (gal) gal.classList.remove('has-contain');
+        }
+      };
+      testImg.src = src;
+    }
+
+    var mainImg = $('#mainPdpImg');
+    if (mainImg) {
+      updateMainImg(mainImg.src);
+    }
+
+    $$('.pdp-thumb').forEach(function (btn) {
+      btn.onclick = function () {
+        updateMainImg(btn.dataset.pdpImg);
+        $$('.pdp-thumb').forEach(function (b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+      };
+    });
+
+    var zoomBtn = $('#galleryZoomBtn');
+    function openLightbox() {
+      var main = $('#mainPdpImg');
+      if (!main) return;
+      var lb = document.createElement('div');
+      lb.className = 'pdp-lightbox';
+      lb.innerHTML = '<div class="pdp-lightbox-backdrop"></div><div class="pdp-lightbox-content"><img src="' + esc(main.src) + '" alt=""><button type="button" class="pdp-lightbox-close" aria-label="Close">✕</button></div>';
+      document.body.appendChild(lb);
+      function closeLb() { lb.remove(); }
+      lb.querySelector('.pdp-lightbox-backdrop').onclick = closeLb;
+      lb.querySelector('.pdp-lightbox-close').onclick = closeLb;
+      var onEsc = function (e) { if (e.key === 'Escape') { closeLb(); document.removeEventListener('keydown', onEsc); } };
+      document.addEventListener('keydown', onEsc);
+    }
+    if (zoomBtn) zoomBtn.onclick = openLightbox;
+    if (mainImg) mainImg.onclick = openLightbox;
     var overlay = $('#overlay'); if (overlay) overlay.onclick = closeDrawers;
     var rt = $('#retry'); if (rt) rt.onclick = function () { Promise.all([loadCatalogue(), loadMe()]).then(route, route); };
     var sb = $('#searchBtn'); if (sb) sb.onclick = function () { var bar = $('#searchbar'); bar.classList.toggle('open'); if (bar.classList.contains('open')) $('#searchInput').focus(); };
@@ -534,7 +635,7 @@
     $$('[data-news]').forEach(function (f) {
       f.onsubmit = function (e) {
         e.preventDefault();
-        api('POST', '/api/subscribe', { email: f.querySelector('input').value }).then(function () { f.reset(); toast('You are in. Welcome to the MELTMARE circle'); }, function (x) { toast(x.message); });
+        api('POST', '/api/subscribe', { email: f.querySelector('input').value }).then(function () { f.reset(); toast('You are in. Welcome to the MELTMERE circle'); }, function (x) { toast(x.message); });
       };
     });
     var cf = $('#contactForm'); if (cf) cf.onsubmit = function (e) {
@@ -557,7 +658,7 @@
     var ao = $('#adminOut'); if (ao) ao.onclick = function () { api('POST', '/api/admin/logout', {}).then(route); };
     $$('[data-pf]').forEach(function (inp) {
       inp.onchange = function () {
-        var body = {}; body[inp.dataset.pf] = inp.type === 'checkbox' ? inp.checked : Number(inp.value);
+        var body = {}; body[inp.dataset.pf] = inp.type === 'checkbox' ? inp.checked : (inp.type === 'number' ? Number(inp.value) : inp.value);
         api('PATCH', '/api/admin/products/' + inp.dataset.slug, body).then(function () { toast('Product saved'); }, function (x) { toast(x.message); route(); });
       };
     });
@@ -584,18 +685,9 @@
   }
 
   function bindLogin(lf) {
-    var st = { mode: 'email', step: 1, id: '' };
-    var idInput = $('#idInput'), label = $('#idLabel'), btn = $('#loginBtn'), err = $('#loginErr'), note = $('#otpNote'), resend = $('#resendBtn'), otp = $$('.otp input'), resendTimer;
+    var st = { step: 1, id: '', countryCode: '+91' };
+    var idInput = $('#idInput'), ccInput = $('#countryCode'), btn = $('#loginBtn'), err = $('#loginErr'), note = $('#otpNote'), resend = $('#resendBtn'), otp = $$('.otp input'), resendTimer;
     var next = safeNext(new URLSearchParams(location.search).get('next'));
-    $$('.tabs button').forEach(function (b) {
-      b.onclick = function () {
-        if (st.step !== 1) return;
-        st.mode = b.dataset.mode; $$('.tabs button').forEach(function (x) { x.classList.toggle('on', x === b); });
-        label.textContent = st.mode === 'email' ? 'Email' : 'Phone number';
-        idInput.type = st.mode === 'email' ? 'email' : 'tel'; idInput.value = ''; idInput.pattern = st.mode === 'phone' ? '[0-9]{10}' : ''; idInput.title = 'Please enter a valid 10 digit phone number';
-        idInput.autocomplete = st.mode === 'email' ? 'email' : 'tel'; err.textContent = '';
-      };
-    });
     otp.forEach(function (o, i) {
       o.oninput = function () { o.value = o.value.replace(/\D/g, ''); if (o.value && otp[i + 1]) otp[i + 1].focus(); };
       o.onkeydown = function (e) { if (e.key === 'Backspace' && !o.value && otp[i - 1]) otp[i - 1].focus(); };
@@ -604,31 +696,43 @@
         e.preventDefault(); otp.forEach(function (x, k) { x.value = t.charAt(k) || ''; }); (otp[Math.min(t.length, 5)]).focus();
       };
     });
-    function armResend() { resend.style.display = 'none'; clearTimeout(resendTimer); resendTimer = setTimeout(function () { resend.style.display = ''; }, 30000); }
+    function armResend() {
+      resend.style.display = 'none';
+      clearTimeout(resendTimer);
+      resendTimer = setTimeout(function () { resend.style.display = ''; }, 30000);
+    }
     function request() {
-      return api('POST', '/api/auth/request', { mode: st.mode, id: st.id }).then(function (j) {
-        note.textContent = 'We sent a 6 digit code to ' + st.id + (j.devOtp ? '. Test mode: your code is ' + j.devOtp : '');
+      return api('POST', '/api/auth/request', { mode: 'phone', id: st.id, countryCode: st.countryCode }).then(function (j) {
+        var fullPhone = (st.countryCode === '+91' ? '+91 ' : st.countryCode + ' ') + st.id;
+        note.textContent = 'We sent a 6 digit code to ' + fullPhone + (j.devOtp ? '. Test mode: your code is ' + j.devOtp : '');
         armResend();
       });
     }
-    resend.onclick = function () { err.textContent = ''; request().then(function () { toast('A new code is on its way'); }, function (x) { err.textContent = x.message; }); };
+    resend.onclick = function () { err.textContent = ''; request().then(function () { toast('A new code has been sent'); }, function (x) { err.textContent = x.message; }); };
     lf.onsubmit = function (e) {
       e.preventDefault(); err.textContent = '';
       if (st.step === 1) {
-        st.id = idInput.value.trim(); btn.disabled = true; btn.textContent = 'Sending…';
+        st.id = idInput.value.trim();
+        st.countryCode = ccInput ? ccInput.value : '+91';
+        btn.disabled = true; btn.textContent = 'Sending OTP…';
         request().then(function () {
-          st.step = 2; $('#otpBox').style.display = ''; idInput.readOnly = true; btn.disabled = false; btn.textContent = 'Verify and continue'; otp[0].focus();
+          st.step = 2; $('#otpBox').style.display = ''; $('#idField').style.display = 'none'; btn.disabled = false; btn.textContent = 'Verify and continue'; otp[0].focus();
         }, function (x) { btn.disabled = false; btn.textContent = 'Send OTP'; err.textContent = x.message; });
       } else {
         var code = otp.map(function (o) { return o.value; }).join('');
         if (code.length !== 6) { err.textContent = 'Please enter the 6 digit code'; return; }
         btn.disabled = true; btn.textContent = 'Checking…';
-        api('POST', '/api/auth/verify', { mode: st.mode, id: st.id, code: code, name: $('#nameInput').value.trim() }).then(function (j) {
-          S.user = j.user; go(next);
+        api('POST', '/api/auth/verify', { mode: 'phone', id: st.id, countryCode: st.countryCode, code: code, name: ($('#nameInput') ? $('#nameInput').value.trim() : '') }).then(function (j) {
+          S.user = j.user; toast('Welcome, ' + j.user.name); go(next || '/account');
         }, function (x) {
           btn.disabled = false; btn.textContent = 'Verify and continue';
-          if (x.data && x.data.needName) { $('#nameField').style.display = ''; $('#nameInput').focus(); err.textContent = 'Welcome! Tell us your name to finish.'; }
-          else err.textContent = x.message;
+          if (x.data && x.data.needName) {
+            $('#nameField').style.display = '';
+            $('#nameInput').focus();
+            err.textContent = 'Welcome! Since this is your first time, please enter your name to complete sign up.';
+          } else {
+            err.textContent = x.message;
+          }
         });
       }
     };

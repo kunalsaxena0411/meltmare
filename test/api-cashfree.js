@@ -18,12 +18,13 @@ global.fetch = async (url, opts) => {
 
 (async () => {
   const SECRET = 'test_secret_key';
-  const { base, } = await boot({ CASHFREE_APP_ID: 'TEST_APP', CASHFREE_SECRET_KEY: SECRET, CASHFREE_ENV: 'sandbox', SITE_URL: 'https://meltmare.example' });
+  const { base, } = await boot({ CASHFREE_APP_ID: 'TEST_APP', CASHFREE_SECRET_KEY: SECRET, CASHFREE_ENV: 'sandbox', SITE_URL: 'https://meltmere.example' });
   const { sweep } = require('../server');
   const shop = client(base), admin = client(base), anon = client(base);
   const addr = { name: 'Asha Rao', phone: '9876543210', line: '12 MG Road', city: 'Bengaluru', state: 'Karnataka', pin: '560001' };
-  let r = await shop.api('POST', '/api/auth/request', { mode: 'email', id: 'asha@example.com' });
-  await shop.api('POST', '/api/auth/verify', { mode: 'email', id: 'asha@example.com', code: r.json.devOtp, name: 'Asha' });
+  let r = await shop.api('POST', '/api/auth/request', { mode: 'phone', id: '9876543210' });
+  await shop.api('POST', '/api/auth/verify', { mode: 'phone', id: '9876543210', code: r.json.devOtp, name: 'Asha' });
+  await shop.api('PATCH', '/api/me', { name: 'Asha', email: 'asha@example.com' });
   check('config reports sandbox', (await shop.api('GET', '/api/products')).json.config.payments === 'sandbox');
 
   console.log('Create order');
@@ -32,7 +33,7 @@ global.fetch = async (url, opts) => {
   check('returns session id for Cashfree JS', r.json.payment.paymentSessionId === 'session_' + o1.number && r.json.payment.mode === 'sandbox', r.text);
   check('calls sandbox /pg/orders with credentials', c.url === 'https://sandbox.cashfree.com/pg/orders' && c.opts.headers['x-client-id'] === 'TEST_APP' && c.opts.headers['x-client-secret'] === SECRET && c.opts.headers['x-api-version'] === '2023-08-01');
   check('sends server computed amount', sent.order_amount === 678 && sent.order_currency === 'INR' && sent.order_id === o1.number);
-  check('return and notify urls', sent.order_meta.return_url === 'https://meltmare.example/order/' + o1.id && sent.order_meta.notify_url === 'https://meltmare.example/api/cashfree/webhook');
+  check('return and notify urls', sent.order_meta.return_url === 'https://meltmere.example/order/' + o1.id && sent.order_meta.notify_url === 'https://meltmere.example/api/cashfree/webhook');
   check('customer details', sent.customer_details.customer_phone === '9876543210' && sent.customer_details.customer_email === 'asha@example.com');
   check('no mock endpoint when keys are set', (await shop.api('POST', '/api/mock/pay', { id: o1.id, result: 'success' })).status === 404);
 

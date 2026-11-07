@@ -4,8 +4,8 @@ const os = require('os');
 const path = require('path');
 
 exports.boot = function (env) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'meltmare-test-'));
-  Object.assign(process.env, { DATA_DIR: dir, DEV_SHOW_OTP: '1', DEV_ADMIN_PASSWORD: 'test-admin-pass', SITE_URL: 'http://localhost', NODE_ENV: 'test' }, env || {});
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'meltmere-test-'));
+  Object.assign(process.env, { DATA_DIR: dir, DEV_SHOW_OTP: '1', DEV_ADMIN_PASSWORD: 'test-admin-pass', SITE_URL: 'http://localhost', NODE_ENV: 'test', ADMIN_EMAIL: 'admin@meltmere.com' }, env || {});
   const { server } = require('../server');
   return new Promise((resolve) => server.listen(0, () => resolve({ server, base: 'http://127.0.0.1:' + server.address().port, dir })));
 };

@@ -40,14 +40,14 @@ const errors = [];
 
   console.log('Pages');
   const routes = {
-    '/': ['Warm light', 'Our favourites', 'Find your scent', 'Loved by our customers', 'Join the MELTMARE circle', 'Cedar Dusk'],
-    '/shop': ['Shop all', 'Showing 10 of 10', 'Sold out', 'Only 3 left'],
-    '/shop?scent=Woody': ['Cedar Dusk', 'Fig and Sandalwood', 'Showing 2 of 10'],
+    '/': ['Warm light', 'Our favourites', 'Find your scent', 'Loved by our customers', 'Join the MELTMERE circle', 'Cedar Dusk'],
+    '/shop': ['Shop all', 'Showing 15 of 15', 'Sold out', 'Only 3 left'],
+    '/shop?scent=Woody': ['Cedar Dusk', 'Fig and Sandalwood', 'Showing 3 of 15'],
     '/product/cedar-dusk': ['Cedar Dusk', 'Cedarwood', '599', 'In stock, ready to ship', 'Add to cart', 'You may also like'],
     '/product/rose-petal': ['Sold out for now'],
-    '/story': ['Our story'], '/contact': ['Say hello', 'hello@meltmare.com', 'Send message'], '/faq': ['Frequently asked questions'], '/candle-care': ['Burn it right'],
+    '/story': ['Our story'], '/contact': ['Say hello', 'hello@meltmere.com', 'Send message'], '/faq': ['Frequently asked questions'], '/candle-care': ['Burn it right'],
     '/policies/shipping': ['Shipping policy'], '/policies/privacy': ['Cashfree'], '/cart': ['Your cart is empty'],
-    '/login': ['Welcome to MELTMARE', 'Send OTP'], '/nope': ['This page has gone missing'], '/admin': ['Sign in to manage the store']
+    '/login': ['Welcome to MELTMERE', 'Send OTP'], '/nope': ['This page has gone missing'], '/admin': ['Sign in to manage the store']
   };
   for (const [p, needles] of Object.entries(routes)) {
     const w = await browser().open(p), t = text(w).toLowerCase();
@@ -60,7 +60,7 @@ const errors = [];
     const p = await browser().open('/product/cedar-dusk');
     check('no placeholder brackets on product page', !/\[grams\]|\[hours\]/.test(text(p)));
     const h = await browser().open('/');
-    check('home: 8 favourites, 5 scent tiles', h.document.querySelectorAll('.card').length === 8 && h.document.querySelectorAll('.tile').length === 5);
+    check('home: 8 favourites, 3 collection tiles', h.document.querySelectorAll('.card').length === 8 && h.document.querySelectorAll('.tile').length === 3);
     check('admin page hides credentials', !/admin123|test-admin-pass/.test(text(await browser().open('/admin'))));
     check('product images point at real files', [...h.document.querySelectorAll('.card img')].every((i) => /^\/assets\/img\/[\w-]+\.jpg$/.test(i.getAttribute('src'))));
   }
@@ -101,14 +101,14 @@ const errors = [];
   const w = await shopper.open('/login?next=/checkout');
   const d = w.document;
   w.localStorage.setItem('mm_cart', JSON.stringify([{ slug: 'cedar-dusk', qty: 2 }]));
-  d.querySelector('#idInput').value = 'asha@example.com'; submit(w, d.querySelector('#loginForm'));
+  d.querySelector('#idInput').value = '9876543210'; submit(w, d.querySelector('#loginForm'));
   await until(w, () => d.querySelector('#otpBox').style.display !== 'none', 'otp box');
   const code = (d.querySelector('#otpNote').textContent.match(/code is (\d{6})/) || [])[1];
   check('otp step shows (test mode code visible)', !!code);
   [...d.querySelectorAll('.otp input')].forEach((i, k) => (i.value = code[k]));
   submit(w, d.querySelector('#loginForm'));
   await until(w, () => d.querySelector('#nameField').style.display !== 'none', 'name field');
-  check('new account asked for name', /Tell us your name/.test(d.querySelector('#loginErr').textContent));
+  check('new account asked for name', /Tell us your name|complete sign up/i.test(d.querySelector('#loginErr').textContent));
   d.querySelector('#nameInput').value = 'Asha Rao'; submit(w, d.querySelector('#loginForm'));
   await until(w, () => w.location.pathname === '/checkout' && d.querySelector('#checkoutForm'), 'checkout page');
   check('redirected to checkout, Asha signed in', w.location.pathname === '/checkout' && shopper.jar.mm_s);
@@ -139,7 +139,7 @@ const errors = [];
 
   console.log('Admin');
   const adm = browser(), a = await adm.open('/admin'), ad = a.document;
-  let af = ad.querySelector('#adminLogin'); af.querySelector('[name=email]').value = 'admin@meltmare.com'; af.querySelector('[name=password]').value = 'nope';
+  let af = ad.querySelector('#adminLogin'); af.querySelector('[name=email]').value = 'admin@meltmere.com'; af.querySelector('[name=password]').value = 'nope';
   submit(a, af); await until(a, () => /not right/.test(text(a)), 'wrong pw message');
   check('wrong password rejected', /not right/.test(text(a)));
   af = ad.querySelector('#adminLogin'); af.querySelector('[name=password]').value = 'test-admin-pass'; submit(a, af);
@@ -167,7 +167,7 @@ const errors = [];
   console.log('Customer sees shipping update');
   const c2 = await shopper.open('/login');
   // sign in again as Asha
-  c2.document.querySelector('#idInput').value = 'asha@example.com'; submit(c2, c2.document.querySelector('#loginForm'));
+  c2.document.querySelector('#idInput').value = '9876543210'; submit(c2, c2.document.querySelector('#loginForm'));
   await until(c2, () => c2.document.querySelector('#otpBox').style.display !== 'none', 'otp');
   const code2 = c2.document.querySelector('#otpNote').textContent.match(/code is (\d{6})/)[1];
   [...c2.document.querySelectorAll('.otp input')].forEach((i, k) => (i.value = code2[k])); submit(c2, c2.document.querySelector('#loginForm'));

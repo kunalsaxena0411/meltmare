@@ -1,4 +1,4 @@
-// MELTMARE store server: static site + JSON API. Zero dependencies, Node 18+.
+// MELTMERE store server: static site + JSON API. Zero dependencies, Node 18+.
 // Run: node server.js   (see README.md for configuration)
 const http = require('http');
 const fs = require('fs');
@@ -14,6 +14,7 @@ const notify = require('./lib/notify');
 const ROOT = __dirname;
 const UPLOADS = path.join(cfg.dataDir, 'uploads');
 const SCENTS = ['Woody', 'Floral', 'Fresh', 'Sweet', 'Spiced'];
+const SECTIONS = ['Royal Collection', 'Pearl Collection', 'Signature Collection'];
 const PAID_FLOW = ['Paid', 'Packed', 'Shipped', 'Delivered'];
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 
@@ -58,10 +59,37 @@ const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
 const int = (v) => (Number.isFinite(Number(v)) && Number.isInteger(Number(v)) ? Number(v) : NaN);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE = /^[6-9]\d{9}$/;
-const normId = (mode, v) => {
-  v = str(v, 120).toLowerCase();
-  if (mode === 'email') { if (!EMAIL.test(v)) throw bad('Please enter a valid email address'); return v; }
-  if (mode === 'phone') { v = v.replace(/[\s-]/g, '').replace(/^(\+91|91|0)(?=\d{10}$)/, ''); if (!PHONE.test(v)) throw bad('Please enter a valid 10 digit phone number'); return v; }
+const normId = (mode, v, countryCode) => {
+  v = str(v, 120);
+  if (mode === 'email') {
+    v = v.toLowerCase();
+    if (!EMAIL.test(v)) throw bad('Please enter a valid email address');
+    return v;
+  }
+  if (mode === 'phone') {
+    let clean = v.replace(/[\s-]/g, '');
+    const cc = str(countryCode, 6) || '+91';
+    if (clean.startsWith('+')) {
+      if (clean.startsWith('+91')) {
+        clean = clean.slice(3);
+        if (!PHONE.test(clean)) throw bad('Please enter a valid 10 digit phone number');
+        return clean;
+      }
+      if (!/^\+\d{7,15}$/.test(clean)) throw bad('Please enter a valid phone number');
+      return clean;
+    }
+    if (/^(91|0)[6-9]\d{9}$/.test(clean)) {
+      clean = clean.replace(/^(91|0)/, '');
+      return clean;
+    }
+    if (cc === '+91') {
+      if (!PHONE.test(clean)) throw bad('Please enter a valid 10 digit phone number');
+      return clean;
+    }
+    const full = (cc.startsWith('+') ? cc : '+' + cc) + clean;
+    if (!/^\+\d{7,15}$/.test(full)) throw bad('Please enter a valid phone number');
+    return full;
+  }
   throw bad('Invalid request');
 };
 
@@ -142,16 +170,17 @@ const route = (method, pattern, fn) => routes.push({ method, re: new RegExp('^' 
 
 route('GET', '/api/products', async () => ({
   products: data.products.filter((p) => p.active).map(publicProduct),
-  config: { freeShip: cfg.freeShip, shipFee: cfg.shipFee, store: cfg.store, payments: cashfree.mock ? 'mock' : cashfree.configured ? cashfree.env : 'off' }
+  config: { freeShip: cfg.freeShip, shipFee: cfg.shipFee, store: cfg.store, payments: cashfree.mock ? 'mock' : cashfree.configured ? cashfree.env : 'off', sections: SECTIONS }
 }));
 
-// --- customer auth (email or phone + OTP)
+// --- customer auth (mobile OTP only)
 route('POST', '/api/auth/request', async (ctx) => {
   const b = await readJson(ctx.req);
-  const mode = b.mode === 'phone' ? 'phone' : 'email', ident = normId(mode, b.id);
+  if (b.mode === 'email') throw bad('Sign in is only available via mobile number OTP.');
+  const mode = 'phone', ident = normId(mode, b.id || b.phone, b.countryCode);
   if (A.limited('otp-ip:' + ctx.ip, 15, 15 * 60000) || A.limited('otp-id:' + ident, 5, 15 * 60000)) throw new HttpError(429, 'Too many attempts. Please try again in a few minutes.');
   const key = mode + ':' + ident, prev = data.otps[key];
-  if (prev && Date.now() - prev.sentAt < 30000) throw new HttpError(429, 'Please wait a few seconds before asking for a new code.');
+  if (prev && Date.now() - prev.sentAt < 30000) throw new HttpError(429, 'Please wait 30 seconds before asking for a new code.');
   const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
   data.otps[key] = { hash: crypto.createHash('sha256').update(code + key).digest('hex'), exp: Date.now() + 10 * 60000, tries: 0, sentAt: Date.now() };
   try { await notify.sendOtp(mode, ident, code); } catch (e) { delete data.otps[key]; console.error('OTP send failed:', e.message); throw new HttpError(502, 'We could not send the code. Please try again.'); }
@@ -162,18 +191,19 @@ route('POST', '/api/auth/request', async (ctx) => {
 });
 route('POST', '/api/auth/verify', async (ctx) => {
   const b = await readJson(ctx.req);
-  const mode = b.mode === 'phone' ? 'phone' : 'email', ident = normId(mode, b.id), key = mode + ':' + ident;
+  if (b.mode === 'email') throw bad('Sign in is only available via mobile number OTP.');
+  const mode = 'phone', ident = normId(mode, b.id || b.phone, b.countryCode), key = mode + ':' + ident;
   if (A.limited('verify-ip:' + ctx.ip, 30, 15 * 60000)) throw new HttpError(429, 'Too many attempts. Please try again later.');
   const rec = data.otps[key];
   if (!rec || rec.exp < Date.now()) throw bad('That code has expired. Please ask for a new one.');
   if (rec.tries >= 5) { delete data.otps[key]; throw bad('Too many wrong attempts. Please ask for a new code.'); }
   const given = crypto.createHash('sha256').update(str(b.code, 6) + key).digest('hex');
   if (!A.safeEqual(given, rec.hash)) { rec.tries += 1; persist(); throw bad('That code is not right. Please try again.'); }
-  let user = data.users.find((u) => (mode === 'email' ? u.email === ident : u.phone === ident));
+  let user = data.users.find((u) => u.phone === ident);
   if (!user) {
     const name = str(b.name, 80);
     if (!name) throw new HttpError(422, 'Please tell us your name', { needName: true }); // code is kept so the user can retry with a name
-    user = { id: id('u_'), name, email: mode === 'email' ? ident : '', phone: mode === 'phone' ? ident : '', address: '', created: Date.now() };
+    user = { id: id('u_'), name, email: '', phone: ident, address: '', created: Date.now() };
     data.users.push(user);
   }
   delete data.otps[key]; persist();
@@ -185,16 +215,14 @@ route('POST', '/api/auth/logout', async (ctx) => { ctx.setCookie(A.cookie('mm_s'
 route('PATCH', '/api/me', async (ctx) => {
   const u = needUser(ctx.s), b = await readJson(ctx.req);
   const name = str(b.name, 80), address = str(b.address, 300);
-  let email = str(b.email, 120).toLowerCase(), phone = str(b.phone, 20);
+  let email = b.email !== undefined ? str(b.email, 120).toLowerCase() : (u.email || '');
   if (email && !EMAIL.test(email)) throw bad('Please enter a valid email address');
-  if (phone) phone = normId('phone', phone);
   if (email && data.users.some((x) => x.id !== u.id && x.email === email)) throw bad('That email is already used by another account');
-  if (phone && data.users.some((x) => x.id !== u.id && x.phone === phone)) throw bad('That phone number is already used by another account');
   if (!name) throw bad('Please fill in your name');
-  // the identifier you signed in with cannot be removed
-  if (u.email && !email) email = u.email;
-  if (u.phone && !phone) phone = u.phone;
-  Object.assign(u, { name, email, phone, address }); persist();
+  // the phone number you signed in with cannot be removed
+  let phone = b.phone !== undefined ? normId('phone', b.phone) : u.phone;
+  if (phone && data.users.some((x) => x.id !== u.id && x.phone === phone)) throw bad('That phone number is already used by another account');
+  Object.assign(u, { name, email, phone: phone || u.phone, address }); persist();
   return { user: profile(u) };
 });
 
@@ -316,12 +344,23 @@ function applyProduct(p, b, isNew) {
   const set = (k, v) => { p[k] = v; };
   if (isNew || b.name !== undefined) { const v = str(b.name, 80); if (!v) throw bad('Product name is required'); set('name', v); }
   if (isNew || b.scent !== undefined) { if (!SCENTS.includes(b.scent)) throw bad('Choose a scent family'); set('scent', b.scent); }
+  if (isNew || b.section !== undefined) {
+    const sec = str(b.section, 60);
+    set('section', SECTIONS.includes(sec) ? sec : (p.section || 'Royal Collection'));
+  }
+  if (b.size !== undefined) set('size', str(b.size, 40));
+  if (b.burnTime !== undefined) set('burnTime', str(b.burnTime, 40));
   if (isNew || b.price !== undefined) { const v = int(b.price); if (!(v >= 1 && v <= 100000)) throw bad('Enter a valid price'); set('price', v); }
   if (isNew || b.stock !== undefined) { const v = int(b.stock); if (!(v >= 0 && v <= 100000)) throw bad('Enter a valid stock number'); set('stock', v); }
   if (isNew || b.desc !== undefined) set('desc', str(b.desc, 600));
   if (isNew || b.notes !== undefined) set('notes', (Array.isArray(b.notes) ? b.notes : String(b.notes || '').split(',')).map((n) => str(n, 40)).filter(Boolean).slice(0, 4));
   if (isNew || b.tag !== undefined) set('tag', str(b.tag, 24));
   if (b.image !== undefined) { const v = str(b.image, 200); if (v && !/^\/(media|assets\/img)\/[\w./-]+$/.test(v)) throw bad('Invalid image'); set('image', v); }
+  if (b.images !== undefined) {
+    const arr = (Array.isArray(b.images) ? b.images : [b.images]).map((x) => str(x, 200)).filter((v) => /^\/(media|assets\/img)\/[\w./-]+$/.test(v));
+    set('images', arr);
+    if (arr[0] && !p.image) set('image', arr[0]);
+  }
   if (b.featured !== undefined) set('featured', !!b.featured);
   if (b.active !== undefined) set('active', !!b.active);
 }
@@ -440,6 +479,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
-  server.listen(cfg.port, () => console.log('MELTMARE running on ' + cfg.siteUrl + '  (payments: ' + (cashfree.mock ? 'MOCK test page' : cashfree.configured ? 'Cashfree ' + cashfree.env : 'OFF') + ')'));
+  server.listen(cfg.port, () => console.log('MELTMERE running on ' + cfg.siteUrl + '  (payments: ' + (cashfree.mock ? 'MOCK test page' : cashfree.configured ? 'Cashfree ' + cashfree.env : 'OFF') + ')'));
 }
 module.exports = { server, sweep };
