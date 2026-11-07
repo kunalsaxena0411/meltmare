@@ -60,7 +60,7 @@ const errors = [];
     const p = await browser().open('/product/cedar-dusk');
     check('no placeholder brackets on product page', !/\[grams\]|\[hours\]/.test(text(p)));
     const h = await browser().open('/');
-    check('home: 8 favourites, 5 scent tiles', h.document.querySelectorAll('.card').length === 8 && h.document.querySelectorAll('.tile').length === 5);
+    check('home: 8 favourites, 3 collection tiles', h.document.querySelectorAll('.card').length === 8 && h.document.querySelectorAll('.tile').length === 3);
     check('admin page hides credentials', !/admin123|test-admin-pass/.test(text(await browser().open('/admin'))));
     check('product images point at real files', [...h.document.querySelectorAll('.card img')].every((i) => /^\/assets\/img\/[\w-]+\.jpg$/.test(i.getAttribute('src'))));
   }

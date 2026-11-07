@@ -221,8 +221,19 @@
       '<div class="marquee"><div class="track">' + track + track + '</div></div>' +
       '<section class="section"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">THE EDIT</p><h2>Our favourites</h2></div><div class="grid reveal">' + fav.map(card).join('') + '</div>' +
       '<div class="center mt"><a class="text-link" href="/shop" data-link>View all products →</a></div></div></section>' +
-      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SHOP BY COLLECTION</p><h2>Find your scent</h2><p>Every MELTMERE candle begins with a fragrance. Explore our creations across three signature collections.</p></div><div class="tiles reveal">' +
-      [['Royal Collection', '/assets/img/royal-bronze-1.jpg'], ['Pearl Collection', '/assets/img/pearl-candle-1.jpg'], ['Signature Collection', '/assets/img/vanilla-linen.jpg']].map(function (c) { return '<a class="tile" href="/shop?section=' + encodeURIComponent(c[0]) + '" data-link><img src="' + c[1] + '" alt="" data-ph=""><div><h3>' + c[0] + '</h3><span>EXPLORE</span></div></a>'; }).join('') + '</div></div></section>' +
+      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal center" style="max-width:700px;margin-inline:auto;margin-bottom:44px"><p class="eyebrow gold">THE SIGNATURE EDITIONS</p><h2>Find your scent</h2><p>Every MELTMERE candle begins with a fragrance. Explore our creations across three signature collections.</p></div><div class="tiles reveal">' +
+      [
+        { name: 'Royal Collection', tag: 'Artisan Vessels', desc: 'Rustic bronze and hand-carved wooden multi-wick bowls that cast a flickering golden glow.', img: '/assets/img/royal-bronze-1.jpg', count: '5 Designs' },
+        { name: 'Pearl Collection', tag: 'Pearled Sand Wax', desc: 'Loose scented pearled sand wax in sculptured glass dishes, complete with natural wicks.', img: '/assets/img/pearl-candle-1.jpg', count: '5 Designs' },
+        { name: 'Signature Collection', tag: 'Classic Essentials', desc: 'Timeless hand-poured glass tumbler candles with clean burns and comforting botanical scents.', img: '/assets/img/vanilla-linen.jpg', count: '5 Scents' }
+      ].map(function (c) {
+        return '<a class="tile" href="/shop?section=' + encodeURIComponent(c.name) + '" data-link><img src="' + c.img + '" alt="" data-ph="">' +
+          '<div class="tile-content">' +
+          '<div class="tile-top"><span class="tile-badge">' + c.tag + '</span><span class="tile-count">' + c.count + '</span></div>' +
+          '<div class="tile-bottom"><h3>' + c.name + '</h3><p class="tile-desc">' + c.desc + '</p>' +
+          '<div class="tile-action"><span>EXPLORE COLLECTION</span><svg class="tile-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>' +
+          '</div></div></a>';
+      }).join('') + '</div></div></section>' +
       '<section class="promise"><div class="wrap cols">' + [[I.flame, 'Thoughtfully made', 'Designed with care, finished by hand'], [I.gift, 'Gift ready', 'Beautiful enough to give as it is'], [I.shield, 'Secure payment', 'Pay safely with UPI, cards or netbanking'], [I.box, 'Delivered with care', 'Packed to arrive in perfect condition']].map(function (x) { return '<div>' + x[0] + '<h4>' + x[1] + '</h4><p>' + x[2] + '</p></div>'; }).join('') + '</div></section>' +
       '<section class="section"><div class="wrap split"><div class="pic reveal"><img src="/assets/img/story.jpg" alt="" data-ph=""></div><div class="reveal"><p class="eyebrow">OUR STORY</p><h2>Made to be lit, kept and gifted</h2>' +
       '<p>Every candle starts with one question: what does this moment smell like? From cedar evenings to sea salt mornings, we choose the fragrance first and design everything else around it.</p><p>We keep our range small and our scents honest, so every candle is one you will want to light again.</p><a class="btn green" href="/story" data-link>Read our story</a></div></div></section>' +
