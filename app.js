@@ -269,7 +269,15 @@
     var thumbsHtml = imgs.length > 1 ? '<div class="pdp-thumbs">' + imgs.map(function (src, idx) {
       return '<button type="button" class="pdp-thumb' + (idx === 0 ? ' on' : '') + '" data-pdp-img="' + esc(src) + '" aria-label="Photo ' + (idx + 1) + '"><img src="' + esc(src) + '" alt="" loading="lazy"></button>';
     }).join('') + '</div>' : '';
-    var galleryHtml = '<div class="pdp-gallery-wrap"><div class="gallery">' + (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') + '<img id="mainPdpImg" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '" loading="eager" data-ph="' + esc(p.name.charAt(0)) + '"></div>' + thumbsHtml + '</div>';
+    var galleryHtml = '<div class="pdp-gallery-wrap">' +
+      '<div class="gallery" id="pdpGallery">' +
+      '<div class="gallery-bg" id="galleryBg"></div>' +
+      (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') +
+      '<button type="button" class="gallery-zoom-btn" id="galleryZoomBtn" title="Click to expand" aria-label="Expand image">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>' +
+      '</button>' +
+      '<img id="mainPdpImg" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '" loading="eager" data-ph="' + esc(p.name.charAt(0)) + '" style="cursor:zoom-in">' +
+      '</div>' + thumbsHtml + '</div>';
     return '<div class="wrap"><div class="crumbs"><a href="/" data-link>Home</a> / <a href="/shop" data-link>Shop</a> / <a href="/shop?scent=' + p.scent + '" data-link>' + p.scent + '</a> / ' + esc(p.name) + '</div>' +
       '<div class="pdp">' + galleryHtml + '<div>' +
       '<p class="eyebrow">' + p.scent.toUpperCase() + '</p><h1>' + esc(p.name) + '</h1><div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px"><span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;background:var(--forest);color:var(--gold);padding:4px 10px;border-radius:4px;font-weight:600">' + esc(p.section || 'Royal Collection') + '</span><span style="font-size:12px;color:var(--muted);background:var(--beige);border:1px solid var(--sand);padding:4px 10px;border-radius:4px">' + esc(p.size || '200g / 6.8 oz') + '</span><span style="font-size:12px;color:var(--muted);background:var(--beige);border:1px solid var(--sand);padding:4px 10px;border-radius:4px">' + esc(p.burnTime || '40 hours') + '</span></div><div class="notes-row">' + p.notes.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div>' +
@@ -545,15 +553,55 @@
   }
 
   function bind() {
+    function updateMainImg(src) {
+      var main = $('#mainPdpImg');
+      var gal = $('#pdpGallery');
+      var bg = $('#galleryBg');
+      if (!main) return;
+      main.src = src;
+      if (bg) bg.style.backgroundImage = 'url("' + src + '")';
+      var testImg = new Image();
+      testImg.onload = function () {
+        if (testImg.naturalHeight > testImg.naturalWidth * 1.15) {
+          main.classList.add('contain-fit');
+          if (gal) gal.classList.add('has-contain');
+        } else {
+          main.classList.remove('contain-fit');
+          if (gal) gal.classList.remove('has-contain');
+        }
+      };
+      testImg.src = src;
+    }
+
+    var mainImg = $('#mainPdpImg');
+    if (mainImg) {
+      updateMainImg(mainImg.src);
+    }
+
     $$('.pdp-thumb').forEach(function (btn) {
       btn.onclick = function () {
-        var main = $('#mainPdpImg');
-        if (!main) return;
-        main.src = btn.dataset.pdpImg;
+        updateMainImg(btn.dataset.pdpImg);
         $$('.pdp-thumb').forEach(function (b) { b.classList.remove('on'); });
         btn.classList.add('on');
       };
     });
+
+    var zoomBtn = $('#galleryZoomBtn');
+    function openLightbox() {
+      var main = $('#mainPdpImg');
+      if (!main) return;
+      var lb = document.createElement('div');
+      lb.className = 'pdp-lightbox';
+      lb.innerHTML = '<div class="pdp-lightbox-backdrop"></div><div class="pdp-lightbox-content"><img src="' + esc(main.src) + '" alt=""><button type="button" class="pdp-lightbox-close" aria-label="Close">✕</button></div>';
+      document.body.appendChild(lb);
+      function closeLb() { lb.remove(); }
+      lb.querySelector('.pdp-lightbox-backdrop').onclick = closeLb;
+      lb.querySelector('.pdp-lightbox-close').onclick = closeLb;
+      var onEsc = function (e) { if (e.key === 'Escape') { closeLb(); document.removeEventListener('keydown', onEsc); } };
+      document.addEventListener('keydown', onEsc);
+    }
+    if (zoomBtn) zoomBtn.onclick = openLightbox;
+    if (mainImg) mainImg.onclick = openLightbox;
     var overlay = $('#overlay'); if (overlay) overlay.onclick = closeDrawers;
     var rt = $('#retry'); if (rt) rt.onclick = function () { Promise.all([loadCatalogue(), loadMe()]).then(route, route); };
     var sb = $('#searchBtn'); if (sb) sb.onclick = function () { var bar = $('#searchbar'); bar.classList.toggle('open'); if (bar.classList.contains('open')) $('#searchInput').focus(); };
