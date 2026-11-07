@@ -7,7 +7,7 @@ const { boot, client, check, done } = require('./helpers');
 
   console.log('Catalogue');
   let r = await shop.api('GET', '/api/products');
-  check('10 products and config', r.json.products.length === 10 && r.json.config.freeShip === 999 && r.json.config.payments === 'mock');
+  check('15 products and config', r.json.products.length === 15 && r.json.config.freeShip === 999 && r.json.config.payments === 'mock');
 
   console.log('Static safety');
   for (const p of ['/server.js', '/.env', '/data/db.json', '/package.json', '/lib/db.js', '/assets/../server.js', '/media/../db.json']) {

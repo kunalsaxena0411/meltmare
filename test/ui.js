@@ -41,8 +41,8 @@ const errors = [];
   console.log('Pages');
   const routes = {
     '/': ['Warm light', 'Our favourites', 'Find your scent', 'Loved by our customers', 'Join the MELTMERE circle', 'Cedar Dusk'],
-    '/shop': ['Shop all', 'Showing 10 of 10', 'Sold out', 'Only 3 left'],
-    '/shop?scent=Woody': ['Cedar Dusk', 'Fig and Sandalwood', 'Showing 2 of 10'],
+    '/shop': ['Shop all', 'Showing 15 of 15', 'Sold out', 'Only 3 left'],
+    '/shop?scent=Woody': ['Cedar Dusk', 'Fig and Sandalwood', 'Showing 3 of 15'],
     '/product/cedar-dusk': ['Cedar Dusk', 'Cedarwood', '599', 'In stock, ready to ship', 'Add to cart', 'You may also like'],
     '/product/rose-petal': ['Sold out for now'],
     '/story': ['Our story'], '/contact': ['Say hello', 'hello@meltmere.com', 'Send message'], '/faq': ['Frequently asked questions'], '/candle-care': ['Burn it right'],

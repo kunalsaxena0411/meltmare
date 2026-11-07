@@ -9,6 +9,7 @@
   var SHIP_FEE = 79;
   var INFO = { email: 'hello@meltmere.com', phone: '', address: '', hours: '', policiesReviewed: false }; // overwritten from the server
   var SCENTS = ['Woody', 'Floral', 'Fresh', 'Sweet', 'Spiced'];
+  var SECTIONS = ['Royal Collection', 'Pearl Collection', 'Signature Collection'];
   var STATUSES = ['Pending payment', 'Paid', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
   var CUSTOMER_STATUS = { 'Pending payment': 'Waiting for payment', Paid: 'Order confirmed', Packed: 'Being packed', Shipped: 'On its way', Delivered: 'Delivered', Cancelled: 'Cancelled' };
 
@@ -141,7 +142,7 @@
     var fab = p.stock > 0 ? '<button class="add-fab" data-add="' + p.slug + '" aria-label="Add ' + esc(p.name) + ' to cart">' + I.plus + '</button>' : '';
     var low = p.stock > 0 && p.stock <= 5 ? '<div class="low">Only ' + p.stock + ' left</div>' : '';
     return '<article class="card"><div class="imgbox">' + tag + '<a href="/product/' + p.slug + '" data-link style="display:block;width:100%;height:100%">' + imgTag(p) + '</a>' + fab + '</div>' +
-      '<div class="meta"><div class="scent">' + esc(p.scent) + '</div><h3><a href="/product/' + p.slug + '" data-link>' + esc(p.name) + '</a></h3>' +
+      '<div class="meta">' + (p.section ? '<div class="card-sec" style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:2px">' + esc(p.section) + '</div>' : '') + '<div class="scent">' + esc(p.scent) + '</div><h3><a href="/product/' + p.slug + '" data-link>' + esc(p.name) + '</a></h3>' +
       '<div class="notes">' + p.notes.map(esc).join(' · ') + '</div><div class="price">' + money(p.price) + '</div>' + low + '</div></article>';
   }
 
@@ -220,8 +221,8 @@
       '<div class="marquee"><div class="track">' + track + track + '</div></div>' +
       '<section class="section"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">THE EDIT</p><h2>Our favourites</h2></div><div class="grid reveal">' + fav.map(card).join('') + '</div>' +
       '<div class="center mt"><a class="text-link" href="/shop" data-link>View all products →</a></div></div></section>' +
-      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SHOP BY SCENT</p><h2>Find your scent</h2><p>Every MELTMERE candle begins with a fragrance. Choose the mood first — the room follows.</p></div><div class="tiles reveal">' +
-      SCENTS.map(function (s) { return '<a class="tile" href="/shop?scent=' + s + '" data-link><img src="/assets/img/scent-' + s.toLowerCase() + '.jpg" alt="" data-ph=""><div><h3>' + s + '</h3><span>EXPLORE</span></div></a>'; }).join('') + '</div></div></section>' +
+      '<section class="section bg-beige"><div class="wrap"><div class="section-head reveal"><p class="eyebrow">SHOP BY COLLECTION</p><h2>Find your scent</h2><p>Every MELTMERE candle begins with a fragrance. Explore our creations across three signature collections.</p></div><div class="tiles reveal">' +
+      [['Royal Collection', '/assets/img/royal-bronze-1.jpg'], ['Pearl Collection', '/assets/img/pearl-candle-1.jpg'], ['Signature Collection', '/assets/img/vanilla-linen.jpg']].map(function (c) { return '<a class="tile" href="/shop?section=' + encodeURIComponent(c[0]) + '" data-link><img src="' + c[1] + '" alt="" data-ph=""><div><h3>' + c[0] + '</h3><span>EXPLORE</span></div></a>'; }).join('') + '</div></div></section>' +
       '<section class="promise"><div class="wrap cols">' + [[I.flame, 'Thoughtfully made', 'Designed with care, finished by hand'], [I.gift, 'Gift ready', 'Beautiful enough to give as it is'], [I.shield, 'Secure payment', 'Pay safely with UPI, cards or netbanking'], [I.box, 'Delivered with care', 'Packed to arrive in perfect condition']].map(function (x) { return '<div>' + x[0] + '<h4>' + x[1] + '</h4><p>' + x[2] + '</p></div>'; }).join('') + '</div></section>' +
       '<section class="section"><div class="wrap split"><div class="pic reveal"><img src="/assets/img/story.jpg" alt="" data-ph=""></div><div class="reveal"><p class="eyebrow">OUR STORY</p><h2>Made to be lit, kept and gifted</h2>' +
       '<p>Every candle starts with one question: what does this moment smell like? From cedar evenings to sea salt mornings, we choose the fragrance first and design everything else around it.</p><p>We keep our range small and our scents honest, so every candle is one you will want to light again.</p><a class="btn green" href="/story" data-link>Read our story</a></div></div></section>' +
@@ -231,11 +232,16 @@
   }
 
   function pageShop() {
-    var qs = new URLSearchParams(location.search), scent = qs.get('scent') || 'All', sort = qs.get('sort') || 'new';
-    var items = store.products().filter(function (p) { return p.active && (scent === 'All' || p.scent === scent); });
+    var qs = new URLSearchParams(location.search), section = qs.get('section') || 'All', scent = qs.get('scent') || 'All', sort = qs.get('sort') || 'new';
+    var items = store.products().filter(function (p) {
+      if (!p.active) return false;
+      if (section !== 'All' && p.section !== section) return false;
+      if (scent !== 'All' && p.scent !== scent) return false;
+      return true;
+    });
     if (sort === 'asc') items.sort(function (a, b) { return a.price - b.price; });
     if (sort === 'desc') items.sort(function (a, b) { return b.price - a.price; });
-    var chips = ['All'].concat(SCENTS).map(function (s) { return '<a class="chip ' + (s === scent ? 'on' : '') + '" href="/shop' + (s === 'All' ? '' : '?scent=' + s) + (sort !== 'new' ? (s === 'All' ? '?' : '&') + 'sort=' + sort : '') + '" data-link>' + s + '</a>'; }).join('');
+    var chips = ['All'].concat(SECTIONS).map(function (s) { return '<a class="chip ' + (s === section ? 'on' : '') + '" href="/shop' + (s === 'All' ? '' : '?section=' + encodeURIComponent(s)) + (sort !== 'new' ? (s === 'All' ? '?' : '&') + 'sort=' + sort : '') + '" data-link>' + s + '</a>'; }).join('');
     return '<div class="page-head"><p class="eyebrow">THE COLLECTION</p><h1>Shop all</h1><p>Everything MELTMERE, in one place.</p></div><div class="wrap"><div class="toolbar"><div class="chips" style="margin:0;justify-content:flex-start">' + chips + '</div>' +
       '<select id="sort" aria-label="Sort"><option value="new"' + (sort === 'new' ? ' selected' : '') + '>Newest</option><option value="asc"' + (sort === 'asc' ? ' selected' : '') + '>Price: low to high</option><option value="desc"' + (sort === 'desc' ? ' selected' : '') + '>Price: high to low</option></select></div>' +
       '<div class="grid">' + items.map(card).join('') + '</div><p class="center muted" style="margin:40px 0 80px">Showing ' + items.length + ' of ' + store.products().filter(function (p) { return p.active; }).length + '</p></div>';
@@ -247,7 +253,7 @@
     var more = store.products().filter(function (x) { return x.active && x.scent === p.scent && x.slug !== p.slug; }).slice(0, 4);
     var stock = p.stock <= 0 ? '<div class="stock out"><i></i>Sold out for now</div>' : p.stock <= 5 ? '<div class="stock low"><i></i>Only ' + p.stock + ' left</div>' : '<div class="stock"><i></i>In stock, ready to ship</div>';
     var tag = p.stock <= 0 ? 'SOLD OUT' : p.tag ? p.tag.toUpperCase() : '';
-    var acc = [['Description', p.desc], ['Details', 'Scent family: ' + p.scent + '. Scent notes: ' + p.notes.join(', ') + '. Hand-poured in small batches.'], ['Delivery and returns', 'Orders are packed within 2 working days and delivered in 3 to 7 working days. Delivery is free above ₹' + FREE_SHIP + '. Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.']];
+    var acc = [['Description', p.desc], ['Specifications', 'Collection: ' + (p.section || 'Royal Collection') + ' · Net Weight: ' + (p.size || '200g / 6.8 oz') + ' · Burn Time: ' + (p.burnTime || '40 hours') + ' · Scent Family: ' + p.scent + ' · Scent notes: ' + p.notes.join(', ')], ['Delivery and returns', 'Orders are packed within 2 working days and delivered in 3 to 7 working days. Delivery is free above ₹' + FREE_SHIP + '. Damaged or wrong items are replaced or refunded if reported within 7 days with photos. Used candles cannot be returned.']];
     var imgs = productImages(p);
     var thumbsHtml = imgs.length > 1 ? '<div class="pdp-thumbs">' + imgs.map(function (src, idx) {
       return '<button type="button" class="pdp-thumb' + (idx === 0 ? ' on' : '') + '" data-pdp-img="' + esc(src) + '" aria-label="Photo ' + (idx + 1) + '"><img src="' + esc(src) + '" alt="" loading="lazy"></button>';
@@ -255,7 +261,7 @@
     var galleryHtml = '<div class="pdp-gallery-wrap"><div class="gallery">' + (tag ? '<span class="tag' + (p.stock <= 0 ? ' red' : '') + '">' + tag + '</span>' : '') + '<img id="mainPdpImg" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '" loading="eager" data-ph="' + esc(p.name.charAt(0)) + '"></div>' + thumbsHtml + '</div>';
     return '<div class="wrap"><div class="crumbs"><a href="/" data-link>Home</a> / <a href="/shop" data-link>Shop</a> / <a href="/shop?scent=' + p.scent + '" data-link>' + p.scent + '</a> / ' + esc(p.name) + '</div>' +
       '<div class="pdp">' + galleryHtml + '<div>' +
-      '<p class="eyebrow">' + p.scent.toUpperCase() + '</p><h1>' + esc(p.name) + '</h1><div class="notes-row">' + p.notes.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div>' +
+      '<p class="eyebrow">' + p.scent.toUpperCase() + '</p><h1>' + esc(p.name) + '</h1><div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px"><span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;background:var(--forest);color:var(--gold);padding:4px 10px;border-radius:4px;font-weight:600">' + esc(p.section || 'Royal Collection') + '</span><span style="font-size:12px;color:var(--muted);background:var(--beige);border:1px solid var(--sand);padding:4px 10px;border-radius:4px">' + esc(p.size || '200g / 6.8 oz') + '</span><span style="font-size:12px;color:var(--muted);background:var(--beige);border:1px solid var(--sand);padding:4px 10px;border-radius:4px">' + esc(p.burnTime || '40 hours') + '</span></div><div class="notes-row">' + p.notes.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div>' +
       '<div class="price">' + money(p.price) + '</div><p class="muted" style="font-size:17px;margin:0">' + esc(p.desc) + '</p>' + stock +
       '<div class="buy"><div class="qty"><button id="qm" aria-label="Decrease">−</button><span id="qv">1</span><button id="qp" aria-label="Increase">+</button></div><button class="btn green" style="flex:1" id="addBtn" data-slug="' + p.slug + '"' + (p.stock <= 0 ? ' disabled' : '') + '>' + (p.stock <= 0 ? 'Sold out' : 'Add to cart') + '</button></div>' +
       '<div class="assure"><span>✓ Free delivery above ₹' + FREE_SHIP + '</span><span>✓ Easy replacement for transit damage</span></div>' +
@@ -401,15 +407,15 @@
     if (tab === 'products') {
       return api('GET', '/api/admin/products').then(function (j) {
         var rows = j.products.map(function (p) {
-          return '<tr><td><div style="display:flex;gap:10px;align-items:center"><div style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:#eee;flex:none">' + imgTag(p) + '</div><div><b>' + esc(p.name) + '</b><br><label class="note" style="cursor:pointer;text-decoration:underline">Change photo<input type="file" accept="image/jpeg,image/png,image/webp" data-img="' + p.slug + '" style="display:none"></label></div></div></td><td>' + esc(p.scent) + '</td>' +
+          return '<tr><td><div style="display:flex;gap:10px;align-items:center"><div style="width:48px;height:48px;border-radius:6px;overflow:hidden;background:#eee;flex:none">' + imgTag(p) + '</div><div><b>' + esc(p.name) + '</b><br><label class="note" style="cursor:pointer;text-decoration:underline">Change photo<input type="file" accept="image/jpeg,image/png,image/webp" data-img="' + p.slug + '" style="display:none"></label></div></div></td><td><select data-pf="section" data-slug="' + p.slug + '">' + SECTIONS.map(function (s) { return '<option' + (s === (p.section || 'Royal Collection') ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></td><td>' + esc(p.scent) + '</td>' +
             '<td><input type="number" min="1" data-pf="price" data-slug="' + p.slug + '" value="' + p.price + '"></td><td><input type="number" min="0" data-pf="stock" data-slug="' + p.slug + '" value="' + p.stock + '"></td>' +
             '<td><input type="checkbox" data-pf="featured" data-slug="' + p.slug + '"' + (p.featured ? ' checked' : '') + '></td><td><input type="checkbox" data-pf="active" data-slug="' + p.slug + '"' + (p.active ? ' checked' : '') + '></td></tr>';
         }).join('');
-        var add = '<form class="panel-box" id="addProduct" style="margin-top:32px"><h3>Add a product</h3><div class="form-grid two"><div class="field"><label>Name</label><input type="text" name="name" required maxlength="80"></div><div class="field"><label>Scent family</label><select name="scent" style="width:100%">' + SCENTS.map(function (s) { return '<option>' + s + '</option>'; }).join('') + '</select></div></div>' +
-          '<div class="form-grid two"><div class="field"><label>Price (₹)</label><input type="number" name="price" min="1" required></div><div class="field"><label>Stock</label><input type="number" name="stock" min="0" required value="10"></div></div>' +
-          '<div class="form-grid two"><div class="field"><label>Scent notes (comma separated)</label><input type="text" name="notes" placeholder="Cedarwood, Amber"></div><div class="field"><label>Tag (optional)</label><input type="text" name="tag" maxlength="24" placeholder="New"></div></div>' +
+        var add = '<form class="panel-box" id="addProduct" style="margin-top:32px"><h3>Add a product</h3><div class="form-grid two"><div class="field"><label>Name</label><input type="text" name="name" required maxlength="80"></div><div class="field"><label>Collection Section</label><select name="section" style="width:100%">' + SECTIONS.map(function (s) { return '<option>' + s + '</option>'; }).join('') + '</select></div></div><div class="form-grid two"><div class="field"><label>Scent family</label><select name="scent" style="width:100%">' + SCENTS.map(function (s) { return '<option>' + s + '</option>'; }).join('') + '</select></div><div class="field"><label>Price (₹)</label><input type="number" name="price" min="1" required></div></div><div class="form-grid two"><div class="field"><label>Stock</label><input type="number" name="stock" min="0" required value="10"></div><div class="field"><label>Size</label><input type="text" name="size" placeholder="200g / 6.8 oz" value="200g / 6.8 oz"></div></div><div class="form-grid two"><div class="field"><label>Burn time</label><input type="text" name="burnTime" placeholder="40 hours" value="40 hours"></div>' +
+          '<div class="field"><label>Tag (optional)</label><input type="text" name="tag" maxlength="24" placeholder="New"></div></div>' +
+          '<div class="field"><label>Scent notes (comma separated)</label><input type="text" name="notes" placeholder="Cedarwood, Amber"></div>' +
           '<div class="field"><label>Description</label><textarea name="desc" maxlength="600"></textarea></div><div class="field"><label>Photo (JPG, PNG or WebP, up to 5 MB)</label><input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></div><div class="err" id="addErr"></div><button class="btn green">Add product</button></form>';
-        return '<div class="table-wrap"><table><tr><th>Product</th><th>Scent</th><th>Price</th><th>Stock</th><th>Featured</th><th>Active</th></tr>' + rows + '</table></div>' + add;
+        return '<div class="table-wrap"><table><tr><th>Product</th><th>Collection</th><th>Scent</th><th>Price</th><th>Stock</th><th>Featured</th><th>Active</th></tr>' + rows + '</table></div>' + add;
       });
     }
     if (tab === 'orders') {
@@ -577,7 +583,7 @@
     var ao = $('#adminOut'); if (ao) ao.onclick = function () { api('POST', '/api/admin/logout', {}).then(route); };
     $$('[data-pf]').forEach(function (inp) {
       inp.onchange = function () {
-        var body = {}; body[inp.dataset.pf] = inp.type === 'checkbox' ? inp.checked : Number(inp.value);
+        var body = {}; body[inp.dataset.pf] = inp.type === 'checkbox' ? inp.checked : (inp.type === 'number' ? Number(inp.value) : inp.value);
         api('PATCH', '/api/admin/products/' + inp.dataset.slug, body).then(function () { toast('Product saved'); }, function (x) { toast(x.message); route(); });
       };
     });

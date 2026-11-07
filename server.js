@@ -14,6 +14,7 @@ const notify = require('./lib/notify');
 const ROOT = __dirname;
 const UPLOADS = path.join(cfg.dataDir, 'uploads');
 const SCENTS = ['Woody', 'Floral', 'Fresh', 'Sweet', 'Spiced'];
+const SECTIONS = ['Royal Collection', 'Pearl Collection', 'Signature Collection'];
 const PAID_FLOW = ['Paid', 'Packed', 'Shipped', 'Delivered'];
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 
@@ -142,7 +143,7 @@ const route = (method, pattern, fn) => routes.push({ method, re: new RegExp('^' 
 
 route('GET', '/api/products', async () => ({
   products: data.products.filter((p) => p.active).map(publicProduct),
-  config: { freeShip: cfg.freeShip, shipFee: cfg.shipFee, store: cfg.store, payments: cashfree.mock ? 'mock' : cashfree.configured ? cashfree.env : 'off' }
+  config: { freeShip: cfg.freeShip, shipFee: cfg.shipFee, store: cfg.store, payments: cashfree.mock ? 'mock' : cashfree.configured ? cashfree.env : 'off', sections: SECTIONS }
 }));
 
 // --- customer auth (email or phone + OTP)
@@ -316,6 +317,12 @@ function applyProduct(p, b, isNew) {
   const set = (k, v) => { p[k] = v; };
   if (isNew || b.name !== undefined) { const v = str(b.name, 80); if (!v) throw bad('Product name is required'); set('name', v); }
   if (isNew || b.scent !== undefined) { if (!SCENTS.includes(b.scent)) throw bad('Choose a scent family'); set('scent', b.scent); }
+  if (isNew || b.section !== undefined) {
+    const sec = str(b.section, 60);
+    set('section', SECTIONS.includes(sec) ? sec : (p.section || 'Royal Collection'));
+  }
+  if (b.size !== undefined) set('size', str(b.size, 40));
+  if (b.burnTime !== undefined) set('burnTime', str(b.burnTime, 40));
   if (isNew || b.price !== undefined) { const v = int(b.price); if (!(v >= 1 && v <= 100000)) throw bad('Enter a valid price'); set('price', v); }
   if (isNew || b.stock !== undefined) { const v = int(b.stock); if (!(v >= 0 && v <= 100000)) throw bad('Enter a valid stock number'); set('stock', v); }
   if (isNew || b.desc !== undefined) set('desc', str(b.desc, 600));
